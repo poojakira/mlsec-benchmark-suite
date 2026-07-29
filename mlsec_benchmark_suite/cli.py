@@ -172,7 +172,7 @@ def build_smoke_result(args: argparse.Namespace) -> dict[str, Any]:
         "schema_version": "1.0.0",
         "suite_version": "0.1.0",
         "created_at": created_at,
-        "run_id": sha256_bytes(f"{args.repository}:{args.repository_commit}:{created_at}:{seeds}".encode("utf-8"))[:16],
+        "run_id": sha256_bytes(f"{args.repository}:{args.repository_commit}:{created_at}:{seeds}".encode())[:16],
         "contract_version": config["thresholds"]["contract_version"],
         "dataset_manifest": dataset_manifest,
         "input_identity": identity,
@@ -295,5 +295,3 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
-
