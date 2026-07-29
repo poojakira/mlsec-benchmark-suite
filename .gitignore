@@ -1,0 +1,10 @@
+results/*.json
+reports/*.md
+!results/.gitkeep
+!reports/.gitkeep
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+build/
+dist/

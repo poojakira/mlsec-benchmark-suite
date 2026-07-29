@@ -1,0 +1,13 @@
+{
+  "contract_version": "portfolio-smoke-v1",
+  "purpose": "CI smoke benchmarks for portfolio evidence plumbing. Full benchmark contracts must use larger manifest-declared public datasets.",
+  "benchmarks": {
+    "hf_scanner": {"measures": ["detection_rate", "false_positive_rate", "throughput_items_per_second"], "thresholds": {"min_detection_rate": 0.0, "max_false_positive_rate": 1.0}},
+    "mcp_gateway": {"measures": ["block_rate", "bypass_resistance", "latency_ms"], "thresholds": {"min_block_rate": 0.0, "max_latency_ms": 1000.0}},
+    "llm_detector": {"measures": ["precision", "recall", "attack_success_rate"], "thresholds": {"min_precision": 0.0, "min_recall": 0.0}},
+    "dataset_poisoning": {"measures": ["detection_rate", "false_positive_rate"], "thresholds": {"min_detection_rate": 0.0, "max_false_positive_rate": 1.0}},
+    "model_privacy": {"measures": ["attack_advantage", "auroc"], "thresholds": {"min_attack_advantage": 0.0, "min_auroc": 0.5}},
+    "adversarial_robustness": {"measures": ["clean_accuracy", "robust_accuracy"], "thresholds": {"min_clean_accuracy": 0.0, "min_robust_accuracy": 0.0}},
+    "pulsenet": {"measures": ["rul_error", "anomaly_f1", "serving_latency_ms"], "thresholds": {"max_rul_error": 1.0, "min_anomaly_f1": 0.0, "max_serving_latency_ms": 1000.0}}
+  }
+}

@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: "3.12"
+      - name: Install package
+        run: python -m pip install -e ".[dev]"
+      - name: Lint
+        run: python -m ruff check .
+      - name: Test
+        run: python -m pytest
+      - name: Signed smoke benchmark
+        env:
+          MLSEC_BENCH_SIGNING_KEY: ci-smoke-signing-key
+        run: |
+          python -m mlsec_benchmark_suite.cli run-smoke \
+            --output results/smoke.json \
+            --repository poojakira/mlsec-benchmark-suite \
+            --repository-commit "$GITHUB_SHA" \
+            --artifact-digest "sha256:ci-wheel-placeholder" \
+            --model-hash "sha256:none" \
+            --dependency-lock-hash "sha256:ci-lock-placeholder"
+          python -m mlsec_benchmark_suite.cli validate results/smoke.json --require-signature
+          python -m mlsec_benchmark_suite.cli report results/smoke.json --output reports/smoke.md
+      - name: Build wheel
+        run: python -m build
+      - name: Audit dependencies
+        run: python -m pip_audit -r requirements.txt
+

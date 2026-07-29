@@ -1,0 +1,10 @@
+{
+  "schema_version": "1.0.0",
+  "name": "portfolio-smoke-fixtures",
+  "source": "Generated deterministic toy fixtures inside mlsec-benchmark-suite",
+  "license": "Apache-2.0",
+  "version": "0.1.0",
+  "dataset_hash": "sha256:8ed9cb8446d6e8b6d6a6cc9cfb43a810d9878b856ea1b96d7d7f09a80bb96337",
+  "acquisition": "No third-party data. Values are generated deterministically by category and seed in mlsec_benchmark_suite.cli.category_smoke.",
+  "split_policy": "Smoke-only toy fixtures. Full benchmark manifests must distinguish development, calibration and final test sets."
+}
