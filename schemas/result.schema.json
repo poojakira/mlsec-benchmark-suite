@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "MLSec Benchmark Result",
+  "type": "object",
+  "required": ["schema_version", "suite_version", "created_at", "run_id", "input_identity", "environment", "contract_version", "dataset_manifest", "results", "raw_artifacts", "failure_accounting", "signature"],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "input_identity": {
+      "type": "object",
+      "required": ["repository", "repository_commit", "artifact_digest", "model_hash", "dataset_hash", "configuration_hash", "dependency_lock_hash", "seeds"]
+    },
+    "signature": {
+      "type": "object",
+      "required": ["algorithm", "payload_sha256", "value"]
+    }
+  }
+}

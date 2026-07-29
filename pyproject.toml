@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mlsec-benchmark-suite"
+version = "0.1.0"
+description = "Reproducible benchmark and evidence infrastructure for ML security portfolio repositories."
+readme = "README.md"
+requires-python = ">=3.10"
+license = "Apache-2.0"
+authors = [{name = "Pooja Kiran"}]
+
+[project.scripts]
+mlsec-benchmark = "mlsec_benchmark_suite.cli:main"
+
+[project.optional-dependencies]
+dev = ["pytest>=8.2", "ruff>=0.8", "build>=1.2", "pip-audit>=2.7"]
+
+[tool.setuptools.packages.find]
+include = ["mlsec_benchmark_suite*"]
+
+[tool.setuptools.package-data]
+mlsec_benchmark_suite = ["contracts/*.json", "datasets/*.json"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100
