@@ -1,5 +1,7 @@
 # mlsec-benchmark-suite
 
+[![Live Dashboard](https://img.shields.io/badge/Live_Dashboard-View-blue)](https://poojakira.github.io/mlsec-dashboards/mlsec-benchmark-suite/)
+
 A benchmark runner that validates ML security product claims with immutable, signed evidence.
 
 It runs tests against ML security tools (HF model scanner, MCP gateway, LLM detector, dataset-poisoning detector, model-privacy attacks, adversarial robustness, PulseNet), records every result as a JSON artifact with cryptographic identifiers, and refuses to let you overwrite or cherry-pick results.
