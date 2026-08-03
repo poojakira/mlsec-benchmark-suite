@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MLSec Benchmark Suite — Dashboard</title>
+<style>
+:root {
+  --bg: #1a1b26;
+  --surface: #24283b;
+  --surface2: #2f3347;
+  --border: #414868;
+  --text: #c0caf5;
+  --text-dim: #565f89;
+  --accent: #7aa2f7;
+  --green: #9ece6a;
+  --red: #f7768e;
+  --orange: #ff9e64;
+  --purple: #bb9af7;
+  --cyan: #7dcfff;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  padding: 2rem;
+}
+h1 { color: var(--accent); margin-bottom: 0.25rem; font-size: 1.8rem; }
+h2 { color: var(--purple); margin: 2rem 0 1rem; font-size: 1.3rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
+h3 { color: var(--cyan); margin: 1rem 0 0.5rem; font-size: 1.1rem; }
+.subtitle { color: var(--text-dim); margin-bottom: 2rem; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem; margin: 1rem 0; }
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1.25rem;
+}
+.card-header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; }
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+.badge-pass { background: rgba(158,206,106,0.15); color: var(--green); }
+.badge-pending { background: rgba(255,158,100,0.15); color: var(--orange); }
+table { width: 100%; border-collapse: collapse; margin: 0.5rem 0; }
+th, td { padding: 0.6rem 0.75rem; text-align: left; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+th { color: var(--accent); font-weight: 600; background: var(--surface2); }
+tr:hover { background: var(--surface2); }
+code {
+  background: var(--surface2);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: 'Cascadia Code', 'Fira Code', monospace;
+  font-size: 0.85rem;
+}
+pre {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 1rem;
+  overflow-x: auto;
+  font-family: 'Cascadia Code', 'Fira Code', monospace;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  margin: 0.5rem 0;
+}
+.status-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 6px;
+}
+.dot-green { background: var(--green); }
+.dot-orange { background: var(--orange); }
+.dot-red { background: var(--red); }
+.integrity-box {
+  background: var(--surface2);
+  border-left: 3px solid var(--cyan);
+  padding: 1rem;
+  border-radius: 0 6px 6px 0;
+  margin: 0.5rem 0;
+}
+.cmd { color: var(--green); }
+.note { color: var(--text-dim); font-size: 0.85rem; font-style: italic; }
+footer { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--border); color: var(--text-dim); font-size: 0.8rem; text-align: center; }
+</style>
+</head>
+<body>
+<h1>&#x1F6E1; MLSec Benchmark Suite</h1>
+<p class="subtitle">Portfolio smoke benchmark dashboard &mdash; contract version: <code>portfolio-smoke-v1</code></p>
+
+
+<!-- Section 1: Benchmark Contract Status -->
+<h2>1. Benchmark Contract Status</h2>
+<p>Products registered in <code>contracts/portfolio-smoke-v1.json</code> with their measured metrics and pass/fail thresholds.</p>
+<table>
+<thead>
+<tr><th>Product</th><th>Measures</th><th>Thresholds</th><th>Contract</th></tr>
+</thead>
+<tbody>
+<tr>
+  <td><span class="status-dot dot-green"></span><strong>hf_scanner</strong></td>
+  <td>detection_rate, false_positive_rate, throughput_items_per_second</td>
+  <td>min_detection_rate: 0.0, max_false_positive_rate: 1.0</td>
+  <td><span class="badge badge-pass">REGISTERED</span></td>
+</tr>
+<tr>
+  <td><span class="status-dot dot-green"></span><strong>mcp_gateway</strong></td>
+  <td>block_rate, bypass_resistance, latency_ms</td>
+  <td>min_block_rate: 0.0, max_latency_ms: 1000.0</td>
+  <td><span class="badge badge-pass">REGISTERED</span></td>
+</tr>
+<tr>
+  <td><span class="status-dot dot-green"></span><strong>llm_detector</strong></td>
+  <td>precision, recall, attack_success_rate</td>
+  <td>min_precision: 0.0, min_recall: 0.0</td>
+  <td><span class="badge badge-pass">REGISTERED</span></td>
+</tr>
+<tr>
+  <td><span class="status-dot dot-green"></span><strong>dataset_poisoning</strong></td>
+  <td>detection_rate, false_positive_rate</td>
+  <td>min_detection_rate: 0.0, max_false_positive_rate: 1.0</td>
+  <td><span class="badge badge-pass">REGISTERED</span></td>
+</tr>
+<tr>
+  <td><span class="status-dot dot-green"></span><strong>model_privacy</strong></td>
+  <td>attack_advantage, auroc</td>
+  <td>min_attack_advantage: 0.0, min_auroc: 0.5</td>
+  <td><span class="badge badge-pass">REGISTERED</span></td>
+</tr>
+<tr>
+  <td><span class="status-dot dot-green"></span><strong>adversarial_robustness</strong></td>
+  <td>clean_accuracy, robust_accuracy</td>
+  <td>min_clean_accuracy: 0.0, min_robust_accuracy: 0.0</td>
+  <td><span class="badge badge-pass">REGISTERED</span></td>
+</tr>
+<tr>
+  <td><span class="status-dot dot-green"></span><strong>pulsenet</strong></td>
+  <td>rul_error, anomaly_f1, serving_latency_ms</td>
+  <td>max_rul_error: 1.0, min_anomaly_f1: 0.0, max_serving_latency_ms: 1000.0</td>
+  <td><span class="badge badge-pass">REGISTERED</span></td>
+</tr>
+</tbody>
+</table>
+<p class="note">Contract purpose: CI smoke benchmarks for portfolio evidence plumbing. Full benchmark contracts must use larger manifest-declared public datasets.</p>
+
+
+<!-- Section 2: Result Schema Visualization -->
+<h2>2. Result Schema (v1.0.0)</h2>
+<p>Every benchmark run must produce a JSON result conforming to <code>schemas/result.schema.json</code>. Required top-level fields:</p>
+
+<div class="grid">
+<div class="card">
+  <div class="card-header"><h3>&#x1F4CB; Required Fields</h3></div>
+  <table>
+    <tr><td><code>schema_version</code></td><td>Must be <code>"1.0.0"</code></td></tr>
+    <tr><td><code>suite_version</code></td><td>Version of benchmark suite</td></tr>
+    <tr><td><code>created_at</code></td><td>ISO 8601 timestamp</td></tr>
+    <tr><td><code>run_id</code></td><td>Unique run identifier</td></tr>
+    <tr><td><code>input_identity</code></td><td>Reproducibility hashes (see below)</td></tr>
+    <tr><td><code>environment</code></td><td>Runtime environment info</td></tr>
+    <tr><td><code>contract_version</code></td><td>Which contract was evaluated</td></tr>
+    <tr><td><code>dataset_manifest</code></td><td>Dataset provenance info</td></tr>
+    <tr><td><code>results</code></td><td>Per-product benchmark results</td></tr>
+    <tr><td><code>raw_artifacts</code></td><td>Paths to raw output files</td></tr>
+    <tr><td><code>failure_accounting</code></td><td>Error/skip tracking</td></tr>
+    <tr><td><code>signature</code></td><td>HMAC integrity signature</td></tr>
+  </table>
+</div>
+<div class="card">
+  <div class="card-header"><h3>&#x1F510; Input Identity (Reproducibility)</h3></div>
+  <table>
+    <tr><td><code>repository</code></td><td>Source repo URL</td></tr>
+    <tr><td><code>repository_commit</code></td><td>Git commit SHA</td></tr>
+    <tr><td><code>artifact_digest</code></td><td>SHA256 of built artifact</td></tr>
+    <tr><td><code>model_hash</code></td><td>Hash of model weights</td></tr>
+    <tr><td><code>dataset_hash</code></td><td>Hash of dataset used</td></tr>
+    <tr><td><code>configuration_hash</code></td><td>Hash of config files</td></tr>
+    <tr><td><code>dependency_lock_hash</code></td><td>Hash of lockfile</td></tr>
+    <tr><td><code>seeds</code></td><td>RNG seeds for reproducibility</td></tr>
+  </table>
+</div>
+</div>
+
+<h3>Example Valid Result Structure</h3>
+<pre>{
+  "schema_version": "1.0.0",
+  "suite_version": "0.1.0",
+  "created_at": "2026-08-02T19:30:00Z",
+  "run_id": "run-abc123",
+  "input_identity": {
+    "repository": "github.com/poojakira/hf-model-provenance-scanner",
+    "repository_commit": "a1b2c3d4e5f6...",
+    "artifact_digest": "sha256:deadbeef...",
+    "model_hash": "sha256:...",
+    "dataset_hash": "sha256:...",
+    "configuration_hash": "sha256:...",
+    "dependency_lock_hash": "sha256:...",
+    "seeds": [42, 123, 7]
+  },
+  "environment": { "os": "linux", "python": "3.11.4", "gpu": "none" },
+  "contract_version": "portfolio-smoke-v1",
+  "dataset_manifest": { "name": "smoke-fixtures", "sha256": "..." },
+  "results": { "hf_scanner": { "detection_rate": 1.0, "false_positive_rate": 0.0 } },
+  "raw_artifacts": ["results/hf_scanner_raw.json"],
+  "failure_accounting": { "errors": 0, "skipped": 0, "details": [] },
+  "signature": {
+    "algorithm": "hmac-sha256",
+    "payload_sha256": "sha256:...",
+    "value": "hmac-sha256:..."
+  }
+}</pre>
+
+
+<!-- Section 3: Smoke Test Status -->
+<h2>3. Smoke Test Status by Product</h2>
+<p>Current status of smoke test fixtures from <code>datasets/smoke-fixtures.json</code>. Run the CLI to generate live results.</p>
+<div class="grid">
+<div class="card">
+  <div class="card-header">
+    <span class="status-dot dot-orange"></span>
+    <strong>hf_scanner</strong>
+  </div>
+  <p>Measures: detection_rate, FPR, throughput</p>
+  <p><span class="badge badge-pending">AWAITING RUN</span></p>
+</div>
+<div class="card">
+  <div class="card-header">
+    <span class="status-dot dot-orange"></span>
+    <strong>mcp_gateway</strong>
+  </div>
+  <p>Measures: block_rate, bypass_resistance, latency</p>
+  <p><span class="badge badge-pending">AWAITING RUN</span></p>
+</div>
+<div class="card">
+  <div class="card-header">
+    <span class="status-dot dot-orange"></span>
+    <strong>llm_detector</strong>
+  </div>
+  <p>Measures: precision, recall, attack_success_rate</p>
+  <p><span class="badge badge-pending">AWAITING RUN</span></p>
+</div>
+<div class="card">
+  <div class="card-header">
+    <span class="status-dot dot-orange"></span>
+    <strong>dataset_poisoning</strong>
+  </div>
+  <p>Measures: detection_rate, false_positive_rate</p>
+  <p><span class="badge badge-pending">AWAITING RUN</span></p>
+</div>
+<div class="card">
+  <div class="card-header">
+    <span class="status-dot dot-orange"></span>
+    <strong>model_privacy</strong>
+  </div>
+  <p>Measures: attack_advantage, auroc</p>
+  <p><span class="badge badge-pending">AWAITING RUN</span></p>
+</div>
+<div class="card">
+  <div class="card-header">
+    <span class="status-dot dot-orange"></span>
+    <strong>adversarial_robustness</strong>
+  </div>
+  <p>Measures: clean_accuracy, robust_accuracy</p>
+  <p><span class="badge badge-pending">AWAITING RUN</span></p>
+</div>
+<div class="card">
+  <div class="card-header">
+    <span class="status-dot dot-orange"></span>
+    <strong>pulsenet</strong>
+  </div>
+  <p>Measures: rul_error, anomaly_f1, serving_latency</p>
+  <p><span class="badge badge-pending">AWAITING RUN</span></p>
+</div>
+</div>
+<p class="note">Status will update to &#x2705; PASS or &#x274C; FAIL after running: <code>mlsec-bench run --contract portfolio-smoke-v1</code></p>
+
+
+<!-- Section 4: Evidence Integrity Indicators -->
+<h2>4. Evidence Integrity</h2>
+<p>Every benchmark result is cryptographically signed to prevent tampering and ensure audit trail integrity.</p>
+
+<div class="grid">
+<div class="card">
+  <div class="card-header"><h3>&#x1F512; HMAC Signature</h3></div>
+  <div class="integrity-box">
+    <p><strong>Algorithm:</strong> <code>hmac-sha256</code></p>
+    <p><strong>Process:</strong></p>
+    <ol style="margin: 0.5rem 0 0 1.2rem; color: var(--text);">
+      <li>Result payload serialized with <code>stable_json()</code> (sorted keys, no whitespace)</li>
+      <li>SHA-256 of payload computed → <code>payload_sha256</code></li>
+      <li>HMAC-SHA256 signed with secret key → <code>signature.value</code></li>
+    </ol>
+    <p style="margin-top: 0.5rem;"><strong>Verification:</strong> <code>hmac.compare_digest(expected, actual)</code></p>
+  </div>
+</div>
+<div class="card">
+  <div class="card-header"><h3>&#x1F9EC; Artifact Digests</h3></div>
+  <div class="integrity-box">
+    <p><strong>Tracked Hashes (input_identity):</strong></p>
+    <table>
+      <tr><td><code>artifact_digest</code></td><td>Built package/wheel SHA-256</td></tr>
+      <tr><td><code>model_hash</code></td><td>Model weights SHA-256</td></tr>
+      <tr><td><code>dataset_hash</code></td><td>Test fixtures SHA-256</td></tr>
+      <tr><td><code>configuration_hash</code></td><td>Config file SHA-256</td></tr>
+      <tr><td><code>dependency_lock_hash</code></td><td>Lockfile SHA-256</td></tr>
+    </table>
+    <p style="margin-top: 0.5rem;" class="note">All hashes use SHA-256. Any mismatch indicates the run is not reproducible from declared inputs.</p>
+  </div>
+</div>
+</div>
+
+<div class="card" style="margin-top: 1rem;">
+  <div class="card-header"><h3>&#x2705; Integrity Check Workflow</h3></div>
+  <pre><span class="cmd"># Verify a result file's signature</span>
+mlsec-bench verify results/latest.json
+
+<span class="cmd"># Check: payload_sha256 matches recomputed hash</span>
+<span class="cmd"># Check: HMAC signature matches with stored key</span>
+<span class="cmd"># Check: input_identity hashes match current repo state</span></pre>
+</div>
+
+<!-- Section 5: How to Run Benchmarks -->
+<h2>5. Running Benchmarks</h2>
+
+<div class="card">
+<h3>Prerequisites</h3>
+<pre><span class="cmd"># Install the benchmark suite</span>
+pip install -e .[dev]
+
+<span class="cmd"># Or install from the repo root</span>
+cd mlsec-benchmark-suite
+pip install -e .</pre>
+</div>
+
+<div class="card" style="margin-top: 1rem;">
+<h3>CLI Commands</h3>
+<pre><span class="cmd"># Run all smoke benchmarks (portfolio-smoke-v1 contract)</span>
+mlsec-bench run --contract portfolio-smoke-v1
+
+<span class="cmd"># Run a specific product benchmark</span>
+mlsec-bench run --contract portfolio-smoke-v1 --product hf_scanner
+
+<span class="cmd"># Verify result integrity</span>
+mlsec-bench verify results/latest.json
+
+<span class="cmd"># List available contracts</span>
+mlsec-bench list-contracts
+
+<span class="cmd"># Run tests</span>
+pytest tests/ -v --cov --cov-fail-under=80</pre>
+</div>
+
+<div class="card" style="margin-top: 1rem;">
+<h3>CI Integration</h3>
+<pre><span class="cmd"># GitHub Actions example</span>
+- name: Run MLSec Benchmarks
+  run: |
+    pip install -e .[dev]
+    mlsec-bench run --contract portfolio-smoke-v1
+    mlsec-bench verify results/latest.json</pre>
+</div>
+
+<div class="card" style="margin-top: 1rem;">
+<h3>Key Files</h3>
+<table>
+  <tr><th>Path</th><th>Purpose</th></tr>
+  <tr><td><code>contracts/portfolio-smoke-v1.json</code></td><td>Benchmark contract (thresholds &amp; measures)</td></tr>
+  <tr><td><code>datasets/smoke-fixtures.json</code></td><td>Minimal test fixtures for CI smoke runs</td></tr>
+  <tr><td><code>schemas/result.schema.json</code></td><td>JSON Schema for validating result files</td></tr>
+  <tr><td><code>mlsec_benchmark_suite/cli.py</code></td><td>CLI entrypoint</td></tr>
+  <tr><td><code>tests/test_cli.py</code></td><td>CLI integration tests</td></tr>
+</table>
+</div>
+
+<footer>
+  <p>MLSec Benchmark Suite &mdash; Generated dashboard for portfolio-smoke-v1 contract</p>
+  <p>7 products &bull; 18 measures &bull; HMAC-SHA256 signed results &bull; Full reproducibility via input_identity hashes</p>
+</footer>
+
+</body>
+</html>
