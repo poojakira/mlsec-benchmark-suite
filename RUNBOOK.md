@@ -27,16 +27,40 @@ The smoke benchmark exercises each product's deterministic pipeline without requ
 ```powershell
 # Windows
 $env:MLSEC_BENCH_SIGNING_KEY = "local-dev-key"
-mlsec-benchmark run-smoke
+mlsec-benchmark run-smoke `
+  --output results/smoke-result.json `
+  --repository-commit $(git rev-parse HEAD) `
+  --artifact-digest "sha256:local-dev" `
+  --model-hash "sha256:none" `
+  --dependency-lock-hash "sha256:none"
 ```
 
 ```bash
 # Linux/macOS
 export MLSEC_BENCH_SIGNING_KEY="local-dev-key"
-mlsec-benchmark run-smoke
+mlsec-benchmark run-smoke \
+  --output results/smoke-result.json \
+  --repository-commit $(git rev-parse HEAD) \
+  --artifact-digest "sha256:local-dev" \
+  --model-hash "sha256:none" \
+  --dependency-lock-hash "sha256:none"
 ```
 
-Results are written to `results/` as signed JSON.
+Required flags:
+- `--output` — path to write the result JSON
+- `--repository-commit` — git SHA of the code being benchmarked
+- `--artifact-digest` — hash of the built artifact
+- `--model-hash` — hash of any model weights (use "sha256:none" if not applicable)
+- `--dependency-lock-hash` — hash of requirements lock file
+
+Optional flags:
+- `--contract` — path to benchmark contract (defaults to built-in portfolio-smoke-v1.json)
+- `--dataset-manifest` — path to dataset fixtures (defaults to built-in smoke-fixtures.json)
+- `--repository` — repo identifier (defaults to "poojakira/mlsec-benchmark-suite")
+- `--seeds` — comma-separated random seeds (defaults to "7,11,19")
+- `--overwrite` — allow overwriting existing result files
+
+Results are written as signed JSON.
 
 ## Validate Results
 
@@ -44,15 +68,33 @@ Check that a result file has a valid HMAC signature and conforms to the schema:
 
 ```bash
 mlsec-benchmark validate results/smoke-result.json
+mlsec-benchmark validate results/smoke-result.json --require-signature
 ```
 
-## List Benchmark Contracts
+## Generate a Report
 
-See which products have registered benchmark contracts:
+Produce a Markdown report from a result file:
 
 ```bash
-mlsec-benchmark list-contracts
+mlsec-benchmark report results/smoke-result.json --output reports/smoke-report.md
 ```
+
+## Build Result Index
+
+Index all results in a directory:
+
+```bash
+mlsec-benchmark build-index --results-dir results --output results/index.json
+```
+
+## Available Commands
+
+| Command | Purpose |
+|---------|---------|
+| `run-smoke` | Run smoke benchmarks, produce signed result JSON |
+| `validate` | Check result schema + optional HMAC signature |
+| `report` | Generate Markdown report from result JSON |
+| `build-index` | Index all result files in a directory |
 
 ## Run Tests
 
