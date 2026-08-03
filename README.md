@@ -1,6 +1,6 @@
 # mlsec-benchmark-suite
 
-[![Live Dashboard](https://img.shields.io/badge/Live_Dashboard-View-blue)](https://poojakira.github.io/mlsec-dashboards/mlsec-benchmark-suite/)
+[![Live Dashboard](https://img.shields.io/badge/Live_Dashboard-View-blue)](https://poojakira.github.io/mlsec-benchmark-suite/)
 
 A benchmark runner that validates ML security product claims with immutable, signed evidence.
 
