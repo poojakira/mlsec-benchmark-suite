@@ -2,22 +2,26 @@
 
 [![Live Dashboard](https://img.shields.io/badge/Live_Dashboard-View-blue)](https://poojakira.github.io/mlsec-benchmark-suite/)
 
-A benchmark runner that validates ML security product claims with immutable, signed evidence.
+A deterministic smoke-test harness for testing benchmark contracts, result schemas, and evidence-signing workflows.
 
-It runs tests against ML security tools (HF model scanner, MCP gateway, LLM detector, dataset-poisoning detector, model-privacy attacks, adversarial robustness, PulseNet), records every result as a JSON artifact with cryptographic identifiers, and refuses to let you overwrite or cherry-pick results.
+It runs smoke tests that exercise the pipeline end-to-end: run tests, validate results against a JSON schema, sign results with HMAC-SHA256, and generate a Markdown report. Smoke tests prove the tooling works — they are **not** product performance claims.
+
+**Current state:** Smoke tests only. Full benchmark datasets and product-specific adapters connecting real detectors are not yet implemented. Commit hashes and artifact hashes are accepted as user-provided strings and validated for non-emptiness, not verified against real artifacts. Signing uses shared-secret HMAC rather than independently verifiable public-key signing.
 
 ## What works today
 
-**Smoke tests only.** The CLI can run a deterministic smoke benchmark that exercises the pipeline end-to-end: run tests, validate results against a JSON schema, sign results with HMAC-SHA256, and generate a Markdown report. Smoke tests prove the tooling works — they are not product performance claims.
-
-Full benchmark datasets and product-specific adapters are not yet implemented.
+- CLI smoke benchmark that exercises the schema, signing, and report pipeline end-to-end
+- HMAC-SHA256 result signing with the `validate` command for tamper detection
+- Markdown report generation from result JSON
+- Deterministic pseudorandom result values for smoke runs (not real detector metrics)
 
 ## What's planned
 
 - Public benchmark datasets for each product area
-- Product-specific adapters that connect real detectors to the benchmark contracts
+- Product-specific adapters that connect real detectors (hf-scanner, mcp-monitor, llm-redteam, etc.) to the benchmark contracts
 - Calibration and final-test dataset splits
 - Comparative reporting (without comparisons to commercial products unless independently reproducible)
+- Migration to public-key signing for independently verifiable evidence
 
 ## Install
 
@@ -63,17 +67,19 @@ On Linux/macOS, replace `$env:MLSEC_BENCH_SIGNING_KEY = "..."` with `export MLSE
 
 Every result file records immutable identifiers:
 
-- **Repository commit** — which exact code produced the result
-- **Artifact digest** — hash of the built package
-- **Model hash** — hash of the model weights under test
-- **Dataset hash** — hash of the test data
-- **Configuration hash** — hash of the benchmark config
-- **Dependency lock hash** — hash of the pinned dependency file
-- **Environment and seeds** — so results can be reproduced
+- **Repository commit** - which exact code produced the result
+- **Artifact digest** - hash of the built package
+- **Model hash** - hash of the model weights under test
+- **Dataset hash** - hash of the test data
+- **Configuration hash** - hash of the benchmark config
+- **Dependency lock hash** - hash of the pinned dependency file
+- **Environment and seeds** - so results can be reproduced
 
 When `MLSEC_BENCH_SIGNING_KEY` is set, the CLI signs the result JSON with HMAC-SHA256. The `validate` command checks both the schema and the signature, so you can detect if anyone edited a result file after the fact.
 
 The CLI also refuses to overwrite existing result files (unless you pass `--overwrite`), so historical results are preserved by default.
+
+**Note on current signing limitations:** HMAC-SHA256 with a shared secret confirms the file has not been edited since signing, but it does not provide independent third-party verifiability (the same key that signs can also forge). Public-key signing is planned.
 
 ## Rules this project enforces
 
@@ -86,24 +92,18 @@ The CLI also refuses to overwrite existing result files (unless you pass `--over
 
 ```
 mlsec-benchmark-suite/
-├── mlsec_benchmark_suite/   # CLI and core logic (stdlib only)
-│   ├── cli.py               # Entry point
-│   ├── contracts/           # Benchmark contract definitions
-│   └── datasets/            # Fixture data for smoke tests
-├── contracts/               # Published contract specs
-├── datasets/                # Dataset manifests
-├── schemas/                 # JSON schema for result validation
-├── results/                 # Output directory for result JSON
-├── reports/                 # Output directory for generated reports
-└── tests/                   # pytest tests for the CLI itself
-```
-
-## Run tests
-
-```
-pytest
+  cli.py            - CLI entry point (run-smoke, validate, report)
+  schema/           - JSON schema for result files
+  signing/          - HMAC signing and verification
+  smoke/            - Smoke test runner (deterministic pseudorandom results)
+  adapters/         - Placeholder: real detector adapters (not yet implemented)
+  reports/          - Report generator
+tests/
+  test_smoke.py     - Smoke benchmark pipeline tests
+  test_schema.py    - Result schema validation tests
+  test_signing.py   - Signing and verification tests
 ```
 
 ## License
 
-Apache-2.0
+MIT
