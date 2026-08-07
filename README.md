@@ -1,6 +1,6 @@
 # mlsec-benchmark-suite
 
-[![Live Dashboard](https://img.shields.io/badge/Live_Dashboard-View-blue)](https://poojakira.github.io/mlsec-benchmark-suite/)
+[![Demo Dashboard (static)](https://img.shields.io/badge/Demo_Dashboard-Static-lightgrey)](https://poojakira.github.io/mlsec-benchmark-suite/)
 
 A deterministic smoke-test harness for testing benchmark contracts, result schemas, and evidence-signing workflows.
 
@@ -106,4 +106,4 @@ tests/
 
 ## License
 
-MIT
+Apache-2.0 (see [LICENSE](LICENSE) file)
