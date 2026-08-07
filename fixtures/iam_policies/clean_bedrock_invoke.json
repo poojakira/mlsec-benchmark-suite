@@ -1,0 +1,16 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "AllowScopedBedrockInvoke",
+      "Effect": "Allow",
+      "Action": ["bedrock:InvokeModel"],
+      "Resource": "arn:aws:bedrock:us-east-1:123456789012:foundation-model/anthropic.claude-3-sonnet",
+      "Condition": {
+        "StringEquals": {
+          "aws:PrincipalTag/project": "my-agent"
+        }
+      }
+    }
+  ]
+}

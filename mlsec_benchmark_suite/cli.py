@@ -264,6 +264,15 @@ def main(argv: list[str] | None = None) -> int:
     report.add_argument("--output", type=Path, required=True)
     report.add_argument("--overwrite", action="store_true")
 
+    iam_lint = sub.add_parser("run-iam-lint", help="Run real benchmark against aws-agent-identity-guard")
+    iam_lint.add_argument("--output", type=Path, required=True)
+    iam_lint.add_argument(
+        "--fixtures-dir",
+        type=Path,
+        default=Path(__file__).resolve().parent.parent / "fixtures" / "iam_policies",
+    )
+    iam_lint.add_argument("--overwrite", action="store_true")
+
     index = sub.add_parser("build-index")
     index.add_argument("--results-dir", type=Path, default=Path("results"))
     index.add_argument("--output", type=Path, required=True)
@@ -289,6 +298,18 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if args.command == "build-index":
         write_json(args.output, build_index(args.results_dir), overwrite=args.overwrite)
+        return 0
+    if args.command == "run-iam-lint":
+        from mlsec_benchmark_suite.adapters.iam_lint_adapter import run_benchmark
+
+        result = run_benchmark(fixtures_dir=args.fixtures_dir)
+        write_json(args.output, result, overwrite=args.overwrite)
+        print(
+            f"IAM lint benchmark complete: "
+            f"precision={result['results']['iam_lint']['aggregate_metrics']['precision']}, "
+            f"recall={result['results']['iam_lint']['aggregate_metrics']['recall']}, "
+            f"f1={result['results']['iam_lint']['aggregate_metrics']['f1']}"
+        )
         return 0
     raise AssertionError(args.command)
 
