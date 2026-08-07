@@ -1,0 +1,16 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "OverprivilegedLambdaAgent",
+      "Effect": "Allow",
+      "Action": [
+        "lambda:InvokeFunction",
+        "lambda:CreateFunction",
+        "lambda:UpdateFunctionCode",
+        "iam:PassRole"
+      ],
+      "Resource": "*"
+    }
+  ]
+}
