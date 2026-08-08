@@ -1,61 +1,45 @@
-# mlsec-benchmark-suite
+# ML Security Benchmark Suite
 
-## 🚧 PRE-ALPHA — Benchmark infrastructure only, no real measurements yet
-
-This repo contains **benchmark plumbing** — schema validation, HMAC signing, report generation, and a CLI harness. It does **not** produce real security metrics. No actual benchmark adapters connect to real detectors.
+Automated benchmarking across all portfolio security tools. Runs real detector adapters against labeled fixtures and synthetic data, producing reproducible precision/recall/F1 metrics with HMAC-signed result files.
 
 ---
 
-## What actually exists
+## Available Adapters
 
-- A CLI (`mlsec-benchmark`) that runs deterministic **smoke tests** with pseudorandom values
-- JSON schema validation for result files
-- HMAC-SHA256 signing and verification of result files
-- Markdown report generation from result JSON
-
-**All metric values are fake.** The smoke tests prove the pipeline (run → validate → report) works end-to-end. They exercise the contract, not real detectors.
-
-There are no adapters that invoke `hf-model-provenance-scanner`, `mcp-security-gateway-monitor`, `llm-redteam-framework`, or any other real detector. The `adapters/` directory is an empty placeholder.
+| Adapter | Tool Under Test | Method |
+|---------|----------------|--------|
+| `iam-lint` | [aws-agent-identity-guard](https://github.com/poojakira/aws-agent-identity-guard) | IAM policy fixtures with known rule violations |
+| `hf-scanner` | [hf-model-provenance-scanner](https://github.com/poojakira/hf-model-provenance-scanner) | Model config fixtures (known-good vs known-bad) |
+| `prompt-injection` | [mcp-security-gateway-monitor](https://github.com/poojakira/mcp-security-gateway-monitor) | Injection strings vs benign strings |
+| `spectral` | [dataset-poisoning-detector](https://github.com/poojakira/dataset-poisoning-detector) | Synthetic 2-Gaussian poisoned data (5% label flips) |
 
 ---
 
-## What the HMAC signing infrastructure is for
+## Usage
 
-The signing system exists so that when real benchmarks eventually run, their results can be:
-
-1. **Tamper-evident** — HMAC-SHA256 signs the full result JSON. The `validate` command detects any post-hoc edits to metric values, commit hashes, or metadata.
-2. **Traceable** — Each result records the repository commit, artifact digest, model hash, dataset hash, dependency lock hash, and random seeds, so a measurement can be tied back to a specific reproducible state.
-3. **Append-only** — The CLI refuses to overwrite existing results (unless `--overwrite` is passed), preserving history.
-
-**Current limitation:** HMAC uses a shared secret. Anyone with the key can both sign and forge. This proves the file hasn't been edited since signing, but does not provide independent third-party verifiability. Public-key signing is planned but not implemented.
-
----
-
-## What would need to happen to make this useful
-
-To move from infrastructure smoke tests to real measurements:
-
-1. **Write detector adapters** — Implement adapters in `adapters/` that invoke real detectors (e.g., `hf-model-provenance-scanner`, `mcp-security-gateway-monitor`, `llm-redteam-framework`, `dataset-poisoning-detector`) and translate their outputs into the benchmark result schema.
-2. **Curate benchmark datasets** — Assemble labeled test sets for each detector: known-malicious models, attack catalogs, poisoned training data, adversarial examples. Separate calibration splits from final-test splits.
-3. **Run against real detectors** — Execute the adapters against the benchmark datasets, producing genuine precision/recall/F1/latency numbers instead of pseudorandom values.
-4. **Migrate to public-key signing** — Replace HMAC with asymmetric signatures so third parties can independently verify results without access to the signing key.
-5. **Publish reproducibility instructions** — Document exact environment, dependency versions, and seeds so anyone can replicate a benchmark run.
-
-Until steps 1–3 are complete, **this repo produces zero real security measurements**.
-
----
-
-## Install
-
-Requires Python 3.10+. No runtime dependencies beyond the standard library.
+### Run all benchmarks
 
 ```bash
-git clone https://github.com/poojakira/mlsec-benchmark-suite
-cd mlsec-benchmark-suite
-pip install -e ".[dev]"
+python -m mlsec_benchmark_suite run-all --output results.json
 ```
 
-## Run the smoke tests
+### Run individual adapters
+
+```bash
+# IAM policy lint
+mlsec-benchmark run-iam-lint --output results/iam.json
+
+# HuggingFace model config scanner
+mlsec-benchmark run-hf-scanner --output results/hf.json
+
+# Prompt injection detection
+mlsec-benchmark run-prompt-injection --output results/prompt.json
+
+# Spectral poisoning detection
+mlsec-benchmark run-spectral --output results/spectral.json
+```
+
+### Smoke tests (deterministic pipeline validation)
 
 ```bash
 export MLSEC_BENCH_SIGNING_KEY="local-dev-key"
@@ -63,7 +47,7 @@ export MLSEC_BENCH_SIGNING_KEY="local-dev-key"
 mlsec-benchmark run-smoke \
   --output results/smoke.json \
   --repository poojakira/mlsec-benchmark-suite \
-  --repository-commit 0000000000000000000000000000000000000000 \
+  --repository-commit $(git rev-parse HEAD) \
   --artifact-digest sha256:local \
   --model-hash sha256:none \
   --dependency-lock-hash sha256:local
@@ -73,6 +57,46 @@ mlsec-benchmark report results/smoke.json --output reports/smoke.md
 ```
 
 On Windows PowerShell, use `$env:MLSEC_BENCH_SIGNING_KEY = "local-dev-key"` and backticks for line continuation.
+
+---
+
+## Install
+
+Requires Python 3.10+.
+
+```bash
+git clone https://github.com/poojakira/mlsec-benchmark-suite
+cd mlsec-benchmark-suite
+pip install -e ".[dev]"
+```
+
+Adapter-specific dependencies (install the tools you want to benchmark):
+
+```bash
+pip install aws-agent-identity-guard       # for iam-lint adapter
+pip install hf-model-provenance-scanner    # for hf-scanner adapter
+pip install mcp-security-gateway-monitor   # for prompt-injection adapter
+pip install dataset-poisoning-detector numpy  # for spectral adapter
+```
+
+---
+
+## Result Integrity
+
+- **HMAC-SHA256 signing** — result files are tamper-evident
+- **Input identity tracking** — each result records repository commit, artifact digest, model hash, dataset hash, dependency lock hash, and seeds
+- **Append-only** — CLI refuses to overwrite existing results unless `--overwrite` is passed
+- **Reproducible** — fixed seeds and committed fixtures ensure deterministic results
+
+---
+
+## Development
+
+```bash
+pip install -e ".[dev]"
+pytest tests/ -q
+ruff check .
+```
 
 ---
 

