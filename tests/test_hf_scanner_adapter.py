@@ -3,7 +3,6 @@
 from pathlib import Path
 from unittest.mock import patch
 
-
 FIXTURES_DIR = Path(__file__).resolve().parent.parent / "fixtures" / "hf_configs"
 
 
