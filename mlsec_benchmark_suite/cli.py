@@ -273,6 +273,32 @@ def main(argv: list[str] | None = None) -> int:
     )
     iam_lint.add_argument("--overwrite", action="store_true")
 
+    hf_scanner = sub.add_parser("run-hf-scanner", help="Run benchmark against hf-model-provenance-scanner")
+    hf_scanner.add_argument("--output", type=Path, required=True)
+    hf_scanner.add_argument(
+        "--fixtures-dir",
+        type=Path,
+        default=Path(__file__).resolve().parent.parent / "fixtures" / "hf_configs",
+    )
+    hf_scanner.add_argument("--overwrite", action="store_true")
+
+    prompt_inj = sub.add_parser("run-prompt-injection", help="Run benchmark against prompt injection detector")
+    prompt_inj.add_argument("--output", type=Path, required=True)
+    prompt_inj.add_argument("--overwrite", action="store_true")
+
+    spectral = sub.add_parser("run-spectral", help="Run benchmark against spectral poisoning detector")
+    spectral.add_argument("--output", type=Path, required=True)
+    spectral.add_argument("--overwrite", action="store_true")
+
+    run_all = sub.add_parser("run-all", help="Run all adapter benchmarks and output combined results")
+    run_all.add_argument("--output", type=Path, required=True)
+    run_all.add_argument(
+        "--fixtures-dir",
+        type=Path,
+        default=Path(__file__).resolve().parent.parent / "fixtures",
+    )
+    run_all.add_argument("--overwrite", action="store_true")
+
     index = sub.add_parser("build-index")
     index.add_argument("--results-dir", type=Path, default=Path("results"))
     index.add_argument("--output", type=Path, required=True)
@@ -310,6 +336,111 @@ def main(argv: list[str] | None = None) -> int:
             f"recall={result['results']['iam_lint']['aggregate_metrics']['recall']}, "
             f"f1={result['results']['iam_lint']['aggregate_metrics']['f1']}"
         )
+        return 0
+    if args.command == "run-hf-scanner":
+        from mlsec_benchmark_suite.adapters.hf_scanner_adapter import run_benchmark as run_hf
+
+        result = run_hf(fixtures_dir=args.fixtures_dir)
+        write_json(args.output, result, overwrite=args.overwrite)
+        metrics = result["results"]["hf_scanner"]["aggregate_metrics"]
+        print(
+            f"HF scanner benchmark complete: "
+            f"precision={metrics['precision']}, "
+            f"recall={metrics['recall']}, "
+            f"f1={metrics['f1']}"
+        )
+        return 0
+    if args.command == "run-prompt-injection":
+        from mlsec_benchmark_suite.adapters.prompt_injection_adapter import run_benchmark as run_pi
+
+        result = run_pi()
+        write_json(args.output, result, overwrite=args.overwrite)
+        metrics = result["results"]["prompt_injection"]["aggregate_metrics"]
+        print(
+            f"Prompt injection benchmark complete: "
+            f"detection_rate={metrics['detection_rate']}, "
+            f"false_positive_rate={metrics['false_positive_rate']}, "
+            f"f1={metrics['f1']}"
+        )
+        return 0
+    if args.command == "run-spectral":
+        from mlsec_benchmark_suite.adapters.spectral_adapter import run_benchmark as run_sp
+
+        result = run_sp()
+        write_json(args.output, result, overwrite=args.overwrite)
+        metrics = result["results"]["spectral"]["aggregate_metrics"]
+        print(
+            f"Spectral detection benchmark complete: "
+            f"detection_rate={metrics['detection_rate']}, "
+            f"precision={metrics['precision']}, "
+            f"f1={metrics['f1']}"
+        )
+        return 0
+    if args.command == "run-all":
+        combined_results: dict[str, Any] = {}
+        errors: list[str] = []
+
+        # IAM lint
+        try:
+            from mlsec_benchmark_suite.adapters.iam_lint_adapter import run_benchmark as run_iam
+            iam_fixtures = args.fixtures_dir / "iam_policies"
+            iam_result = run_iam(fixtures_dir=iam_fixtures)
+            combined_results["iam_lint"] = iam_result["results"]["iam_lint"]
+            print(f"  iam-lint: f1={iam_result['results']['iam_lint']['aggregate_metrics']['f1']}")
+        except Exception as e:
+            errors.append(f"iam-lint: {e}")
+            print(f"  iam-lint: FAILED ({e})")
+
+        # HF scanner
+        try:
+            from mlsec_benchmark_suite.adapters.hf_scanner_adapter import run_benchmark as run_hf_all
+            hf_fixtures = args.fixtures_dir / "hf_configs"
+            hf_result = run_hf_all(fixtures_dir=hf_fixtures)
+            combined_results["hf_scanner"] = hf_result["results"]["hf_scanner"]
+            print(f"  hf-scanner: f1={hf_result['results']['hf_scanner']['aggregate_metrics']['f1']}")
+        except Exception as e:
+            errors.append(f"hf-scanner: {e}")
+            print(f"  hf-scanner: FAILED ({e})")
+
+        # Prompt injection
+        try:
+            from mlsec_benchmark_suite.adapters.prompt_injection_adapter import run_benchmark as run_pi_all
+            pi_result = run_pi_all()
+            combined_results["prompt_injection"] = pi_result["results"]["prompt_injection"]
+            print(f"  prompt-injection: f1={pi_result['results']['prompt_injection']['aggregate_metrics']['f1']}")
+        except Exception as e:
+            errors.append(f"prompt-injection: {e}")
+            print(f"  prompt-injection: FAILED ({e})")
+
+        # Spectral
+        try:
+            from mlsec_benchmark_suite.adapters.spectral_adapter import run_benchmark as run_sp_all
+            sp_result = run_sp_all()
+            combined_results["spectral"] = sp_result["results"]["spectral"]
+            print(f"  spectral: f1={sp_result['results']['spectral']['aggregate_metrics']['f1']}")
+        except Exception as e:
+            errors.append(f"spectral: {e}")
+            print(f"  spectral: FAILED ({e})")
+
+        # Build combined output
+        created_at = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+        run_id = sha256_bytes(f"run-all:{created_at}".encode())[:16]
+
+        combined_payload: dict[str, Any] = {
+            "schema_version": "1.0.0",
+            "suite_version": "0.1.0",
+            "created_at": created_at,
+            "run_id": run_id,
+            "command": "run-all",
+            "adapters_run": list(combined_results.keys()),
+            "adapters_failed": errors,
+            "environment": environment(),
+            "results": combined_results,
+        }
+
+        write_json(args.output, combined_payload, overwrite=args.overwrite)
+        print(f"\nrun-all complete: {len(combined_results)} adapters succeeded, {len(errors)} failed")
+        print(f"Results written to {args.output}")
         return 0
     raise AssertionError(args.command)
 
