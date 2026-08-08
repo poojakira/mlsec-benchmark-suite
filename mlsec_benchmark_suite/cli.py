@@ -111,7 +111,12 @@ def mean_ci(values: list[float]) -> dict[str, float]:
         return {"mean": mean, "ci95_low": mean, "ci95_high": mean, "sample_count": 1}
     stdev = statistics.stdev(values)
     margin = 1.96 * stdev / math.sqrt(len(values))
-    return {"mean": mean, "ci95_low": mean - margin, "ci95_high": mean + margin, "sample_count": len(values)}
+    return {
+        "mean": mean,
+        "ci95_low": mean - margin,
+        "ci95_high": mean + margin,
+        "sample_count": len(values),
+    }
 
 
 def category_smoke(category: str, seed: int) -> dict[str, Any]:
@@ -127,27 +132,65 @@ def category_smoke(category: str, seed: int) -> dict[str, Any]:
         "ci95_high": round(base["ci95_high"], 6),
     }
     category_metrics = {
-        "hf_scanner": {"detection_rate": metrics["mean_signal"], "false_positive_rate": round(1 - metrics["mean_signal"], 6), "throughput_items_per_second": 12.0},
-        "mcp_gateway": {"block_rate": metrics["mean_signal"], "bypass_resistance": round(metrics["ci95_low"], 6), "latency_ms": round(10 + metrics["mean_signal"], 6)},
-        "llm_detector": {"precision": metrics["mean_signal"], "recall": round(metrics["ci95_low"], 6), "attack_success_rate": round(1 - metrics["mean_signal"], 6)},
-        "dataset_poisoning": {"detection_rate": metrics["mean_signal"], "false_positive_rate": round(1 - metrics["ci95_high"], 6)},
-        "model_privacy": {"attack_advantage": metrics["mean_signal"], "auroc": round(0.5 + metrics["mean_signal"] / 2, 6)},
-        "adversarial_robustness": {"clean_accuracy": metrics["mean_signal"], "robust_accuracy": round(metrics["ci95_low"], 6)},
-        "pulsenet": {"rul_error": round(1 - metrics["mean_signal"], 6), "anomaly_f1": metrics["mean_signal"], "serving_latency_ms": round(8 + metrics["mean_signal"], 6)},
+        "hf_scanner": {
+            "detection_rate": metrics["mean_signal"],
+            "false_positive_rate": round(1 - metrics["mean_signal"], 6),
+            "throughput_items_per_second": 12.0,
+        },
+        "mcp_gateway": {
+            "block_rate": metrics["mean_signal"],
+            "bypass_resistance": round(metrics["ci95_low"], 6),
+            "latency_ms": round(10 + metrics["mean_signal"], 6),
+        },
+        "llm_detector": {
+            "precision": metrics["mean_signal"],
+            "recall": round(metrics["ci95_low"], 6),
+            "attack_success_rate": round(1 - metrics["mean_signal"], 6),
+        },
+        "dataset_poisoning": {
+            "detection_rate": metrics["mean_signal"],
+            "false_positive_rate": round(1 - metrics["ci95_high"], 6),
+        },
+        "model_privacy": {
+            "attack_advantage": metrics["mean_signal"],
+            "auroc": round(0.5 + metrics["mean_signal"] / 2, 6),
+        },
+        "adversarial_robustness": {
+            "clean_accuracy": metrics["mean_signal"],
+            "robust_accuracy": round(metrics["ci95_low"], 6),
+        },
+        "pulsenet": {
+            "rul_error": round(1 - metrics["mean_signal"], 6),
+            "anomaly_f1": metrics["mean_signal"],
+            "serving_latency_ms": round(8 + metrics["mean_signal"], 6),
+        },
     }
-    return {"category": category, "summary": metrics, "metrics": category_metrics[category], "raw": samples}
+    return {
+        "category": category,
+        "summary": metrics,
+        "metrics": category_metrics[category],
+        "raw": samples,
+    }
 
 
 def build_smoke_result(args: argparse.Namespace) -> dict[str, Any]:
     seeds = [int(seed) for seed in args.seeds.split(",") if seed.strip()]
-    config = {"mode": "smoke", "categories": CATEGORIES, "seeds": seeds, "thresholds": load_json(args.contract)}
+    config = {
+        "mode": "smoke",
+        "categories": CATEGORIES,
+        "seeds": seeds,
+        "thresholds": load_json(args.contract),
+    }
     dataset_manifest = load_json(args.dataset_manifest)
     raw: list[dict[str, Any]] = []
     results: dict[str, Any] = {}
     failure_accounting: dict[str, Any] = {}
     for category in CATEGORIES:
         runs = [category_smoke(category, seed) for seed in seeds]
-        raw.extend({"category": category, "seed": seed, "raw": run["raw"]} for seed, run in zip(seeds, runs, strict=True))
+        raw.extend(
+            {"category": category, "seed": seed, "raw": run["raw"]}
+            for seed, run in zip(seeds, runs, strict=True)
+        )
         mean_values = [run["summary"]["mean_signal"] for run in runs]
         results[category] = {
             "contract": category,
@@ -156,7 +199,10 @@ def build_smoke_result(args: argparse.Namespace) -> dict[str, Any]:
             "metrics_by_seed": [run["metrics"] for run in runs],
             "predefined_thresholds": config["thresholds"]["benchmarks"][category]["thresholds"],
         }
-        failure_accounting[category] = {"failed_runs": sum(run["summary"]["failure_count"] for run in runs), "total_runs": len(runs)}
+        failure_accounting[category] = {
+            "failed_runs": sum(run["summary"]["failure_count"] for run in runs),
+            "total_runs": len(runs),
+        }
     identity = {
         "repository": args.repository,
         "repository_commit": args.repository_commit,
@@ -172,13 +218,18 @@ def build_smoke_result(args: argparse.Namespace) -> dict[str, Any]:
         "schema_version": "1.0.0",
         "suite_version": "0.1.0",
         "created_at": created_at,
-        "run_id": sha256_bytes(f"{args.repository}:{args.repository_commit}:{created_at}:{seeds}".encode())[:16],
+        "run_id": sha256_bytes(
+            f"{args.repository}:{args.repository_commit}:{created_at}:{seeds}".encode()
+        )[:16],
         "contract_version": config["thresholds"]["contract_version"],
         "dataset_manifest": dataset_manifest,
         "input_identity": identity,
         "environment": environment(),
         "results": results,
-        "raw_artifacts": {"embedded_raw_sample_count": len(raw), "retention_policy": "toy smoke raw data embedded; third-party data is not committed"},
+        "raw_artifacts": {
+            "embedded_raw_sample_count": len(raw),
+            "retention_policy": "toy smoke raw data embedded; third-party data is not committed",
+        },
         "failure_accounting": failure_accounting,
         "signature": {},
     }
@@ -194,7 +245,14 @@ def validate_result(result: dict[str, Any], *, require_signature: bool = False) 
     missing_identity = REQUIRED_IDENTITY_FIELDS - set(identity)
     if missing_identity:
         raise ValueError(f"input_identity missing fields: {sorted(missing_identity)}")
-    for field in ["repository_commit", "artifact_digest", "model_hash", "dataset_hash", "configuration_hash", "dependency_lock_hash"]:
+    for field in [
+        "repository_commit",
+        "artifact_digest",
+        "model_hash",
+        "dataset_hash",
+        "configuration_hash",
+        "dependency_lock_hash",
+    ]:
         value = identity[field]
         if not isinstance(value, str) or not value:
             raise ValueError(f"identity field {field} is required")
@@ -210,7 +268,13 @@ def validate_result(result: dict[str, Any], *, require_signature: bool = False) 
 
 
 def render_report(result: dict[str, Any]) -> str:
-    lines = ["# ML Security Benchmark Report", "", f"Run ID: `{result['run_id']}`", f"Created: {result['created_at']}", ""]
+    lines = [
+        "# ML Security Benchmark Report",
+        "",
+        f"Run ID: `{result['run_id']}`",
+        f"Created: {result['created_at']}",
+        "",
+    ]
     lines.append("## Immutable Inputs")
     for key, value in sorted(result["input_identity"].items()):
         lines.append(f"- `{key}`: `{value}`")
@@ -218,8 +282,16 @@ def render_report(result: dict[str, Any]) -> str:
     for category in CATEGORIES:
         summary = result["results"][category]["summary"]
         failures = result["failure_accounting"][category]
-        lines.append(f"- **{category}**: mean={summary['mean']:.6f}, samples={summary['sample_count']}, failed_runs={failures['failed_runs']}")
-    lines.extend(["", "## Limitations", "Smoke benchmarks use deterministic toy fixtures for CI. Full benchmarks must use manifest-declared public datasets and signed result manifests."])
+        lines.append(
+            f"- **{category}**: mean={summary['mean']:.6f}, samples={summary['sample_count']}, failed_runs={failures['failed_runs']}"
+        )
+    lines.extend(
+        [
+            "",
+            "## Limitations",
+            "Smoke benchmarks use deterministic toy fixtures for CI. Full benchmarks must use manifest-declared public datasets and signed result manifests.",
+        ]
+    )
     return "\n".join(lines) + "\n"
 
 
@@ -228,15 +300,21 @@ def build_index(results_dir: Path) -> dict[str, Any]:
     for path in sorted(results_dir.glob("*.json")):
         result = load_json(path)
         validate_result(result, require_signature=False)
-        entries.append({
-            "run_id": result["run_id"],
-            "path": path.as_posix(),
-            "created_at": result["created_at"],
-            "repository": result["input_identity"]["repository"],
-            "repository_commit": result["input_identity"]["repository_commit"],
-            "signature": result["signature"],
-        })
-    return {"schema_version": "1.0.0", "generated_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat(), "results": entries}
+        entries.append(
+            {
+                "run_id": result["run_id"],
+                "path": path.as_posix(),
+                "created_at": result["created_at"],
+                "repository": result["input_identity"]["repository"],
+                "repository_commit": result["input_identity"]["repository_commit"],
+                "signature": result["signature"],
+            }
+        )
+    return {
+        "schema_version": "1.0.0",
+        "generated_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
+        "results": entries,
+    }
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -244,8 +322,12 @@ def main(argv: list[str] | None = None) -> int:
     sub = parser.add_subparsers(dest="command", required=True)
     run = sub.add_parser("run-smoke")
     run.add_argument("--output", type=Path, required=True)
-    run.add_argument("--contract", type=Path, default=PACKAGE_ROOT / "contracts" / "portfolio-smoke-v1.json")
-    run.add_argument("--dataset-manifest", type=Path, default=PACKAGE_ROOT / "datasets" / "smoke-fixtures.json")
+    run.add_argument(
+        "--contract", type=Path, default=PACKAGE_ROOT / "contracts" / "portfolio-smoke-v1.json"
+    )
+    run.add_argument(
+        "--dataset-manifest", type=Path, default=PACKAGE_ROOT / "datasets" / "smoke-fixtures.json"
+    )
     run.add_argument("--repository", default="poojakira/mlsec-benchmark-suite")
     run.add_argument("--repository-commit", required=True)
     run.add_argument("--artifact-digest", required=True)
@@ -264,7 +346,9 @@ def main(argv: list[str] | None = None) -> int:
     report.add_argument("--output", type=Path, required=True)
     report.add_argument("--overwrite", action="store_true")
 
-    iam_lint = sub.add_parser("run-iam-lint", help="Run real benchmark against aws-agent-identity-guard")
+    iam_lint = sub.add_parser(
+        "run-iam-lint", help="Run real benchmark against aws-agent-identity-guard"
+    )
     iam_lint.add_argument("--output", type=Path, required=True)
     iam_lint.add_argument(
         "--fixtures-dir",
@@ -273,7 +357,9 @@ def main(argv: list[str] | None = None) -> int:
     )
     iam_lint.add_argument("--overwrite", action="store_true")
 
-    hf_scanner = sub.add_parser("run-hf-scanner", help="Run benchmark against hf-model-provenance-scanner")
+    hf_scanner = sub.add_parser(
+        "run-hf-scanner", help="Run benchmark against hf-model-provenance-scanner"
+    )
     hf_scanner.add_argument("--output", type=Path, required=True)
     hf_scanner.add_argument(
         "--fixtures-dir",
@@ -282,15 +368,21 @@ def main(argv: list[str] | None = None) -> int:
     )
     hf_scanner.add_argument("--overwrite", action="store_true")
 
-    prompt_inj = sub.add_parser("run-prompt-injection", help="Run benchmark against prompt injection detector")
+    prompt_inj = sub.add_parser(
+        "run-prompt-injection", help="Run benchmark against prompt injection detector"
+    )
     prompt_inj.add_argument("--output", type=Path, required=True)
     prompt_inj.add_argument("--overwrite", action="store_true")
 
-    spectral = sub.add_parser("run-spectral", help="Run benchmark against spectral poisoning detector")
+    spectral = sub.add_parser(
+        "run-spectral", help="Run benchmark against spectral poisoning detector"
+    )
     spectral.add_argument("--output", type=Path, required=True)
     spectral.add_argument("--overwrite", action="store_true")
 
-    run_all = sub.add_parser("run-all", help="Run all adapter benchmarks and output combined results")
+    run_all = sub.add_parser(
+        "run-all", help="Run all adapter benchmarks and output combined results"
+    )
     run_all.add_argument("--output", type=Path, required=True)
     run_all.add_argument(
         "--fixtures-dir",
@@ -383,6 +475,7 @@ def main(argv: list[str] | None = None) -> int:
         # IAM lint
         try:
             from mlsec_benchmark_suite.adapters.iam_lint_adapter import run_benchmark as run_iam
+
             iam_fixtures = args.fixtures_dir / "iam_policies"
             iam_result = run_iam(fixtures_dir=iam_fixtures)
             combined_results["iam_lint"] = iam_result["results"]["iam_lint"]
@@ -393,21 +486,31 @@ def main(argv: list[str] | None = None) -> int:
 
         # HF scanner
         try:
-            from mlsec_benchmark_suite.adapters.hf_scanner_adapter import run_benchmark as run_hf_all
+            from mlsec_benchmark_suite.adapters.hf_scanner_adapter import (
+                run_benchmark as run_hf_all,
+            )
+
             hf_fixtures = args.fixtures_dir / "hf_configs"
             hf_result = run_hf_all(fixtures_dir=hf_fixtures)
             combined_results["hf_scanner"] = hf_result["results"]["hf_scanner"]
-            print(f"  hf-scanner: f1={hf_result['results']['hf_scanner']['aggregate_metrics']['f1']}")
+            print(
+                f"  hf-scanner: f1={hf_result['results']['hf_scanner']['aggregate_metrics']['f1']}"
+            )
         except Exception as e:
             errors.append(f"hf-scanner: {e}")
             print(f"  hf-scanner: FAILED ({e})")
 
         # Prompt injection
         try:
-            from mlsec_benchmark_suite.adapters.prompt_injection_adapter import run_benchmark as run_pi_all
+            from mlsec_benchmark_suite.adapters.prompt_injection_adapter import (
+                run_benchmark as run_pi_all,
+            )
+
             pi_result = run_pi_all()
             combined_results["prompt_injection"] = pi_result["results"]["prompt_injection"]
-            print(f"  prompt-injection: f1={pi_result['results']['prompt_injection']['aggregate_metrics']['f1']}")
+            print(
+                f"  prompt-injection: f1={pi_result['results']['prompt_injection']['aggregate_metrics']['f1']}"
+            )
         except Exception as e:
             errors.append(f"prompt-injection: {e}")
             print(f"  prompt-injection: FAILED ({e})")
@@ -415,6 +518,7 @@ def main(argv: list[str] | None = None) -> int:
         # Spectral
         try:
             from mlsec_benchmark_suite.adapters.spectral_adapter import run_benchmark as run_sp_all
+
             sp_result = run_sp_all()
             combined_results["spectral"] = sp_result["results"]["spectral"]
             print(f"  spectral: f1={sp_result['results']['spectral']['aggregate_metrics']['f1']}")
@@ -439,7 +543,9 @@ def main(argv: list[str] | None = None) -> int:
         }
 
         write_json(args.output, combined_payload, overwrite=args.overwrite)
-        print(f"\nrun-all complete: {len(combined_results)} adapters succeeded, {len(errors)} failed")
+        print(
+            f"\nrun-all complete: {len(combined_results)} adapters succeeded, {len(errors)} failed"
+        )
         print(f"Results written to {args.output}")
         return 0
     raise AssertionError(args.command)

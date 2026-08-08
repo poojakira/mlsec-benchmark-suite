@@ -98,17 +98,30 @@ def _make_mock_sp():
     }
 
 
-@patch("mlsec_benchmark_suite.adapters.iam_lint_adapter.run_benchmark", return_value=_make_mock_iam())
-@patch("mlsec_benchmark_suite.adapters.hf_scanner_adapter.run_benchmark", return_value=_make_mock_hf())
-@patch("mlsec_benchmark_suite.adapters.prompt_injection_adapter.run_benchmark", return_value=_make_mock_pi())
-@patch("mlsec_benchmark_suite.adapters.spectral_adapter.run_benchmark", return_value=_make_mock_sp())
+@patch(
+    "mlsec_benchmark_suite.adapters.iam_lint_adapter.run_benchmark", return_value=_make_mock_iam()
+)
+@patch(
+    "mlsec_benchmark_suite.adapters.hf_scanner_adapter.run_benchmark", return_value=_make_mock_hf()
+)
+@patch(
+    "mlsec_benchmark_suite.adapters.prompt_injection_adapter.run_benchmark",
+    return_value=_make_mock_pi(),
+)
+@patch(
+    "mlsec_benchmark_suite.adapters.spectral_adapter.run_benchmark", return_value=_make_mock_sp()
+)
 def test_run_all_produces_combined_output(mock_sp, mock_pi, mock_hf, mock_iam, tmp_path):
     output = tmp_path / "all_results.json"
-    main([
-        "run-all",
-        "--output", output.as_posix(),
-        "--fixtures-dir", FIXTURES_DIR.as_posix(),
-    ])
+    main(
+        [
+            "run-all",
+            "--output",
+            output.as_posix(),
+            "--fixtures-dir",
+            FIXTURES_DIR.as_posix(),
+        ]
+    )
 
     assert output.exists()
     result = json.loads(output.read_text(encoding="utf-8"))
@@ -120,17 +133,31 @@ def test_run_all_produces_combined_output(mock_sp, mock_pi, mock_hf, mock_iam, t
     assert result["adapters_failed"] == []
 
 
-@patch("mlsec_benchmark_suite.adapters.iam_lint_adapter.run_benchmark", return_value=_make_mock_iam())
-@patch("mlsec_benchmark_suite.adapters.hf_scanner_adapter.run_benchmark", side_effect=ImportError("scanner not installed"))
-@patch("mlsec_benchmark_suite.adapters.prompt_injection_adapter.run_benchmark", return_value=_make_mock_pi())
-@patch("mlsec_benchmark_suite.adapters.spectral_adapter.run_benchmark", return_value=_make_mock_sp())
+@patch(
+    "mlsec_benchmark_suite.adapters.iam_lint_adapter.run_benchmark", return_value=_make_mock_iam()
+)
+@patch(
+    "mlsec_benchmark_suite.adapters.hf_scanner_adapter.run_benchmark",
+    side_effect=ImportError("scanner not installed"),
+)
+@patch(
+    "mlsec_benchmark_suite.adapters.prompt_injection_adapter.run_benchmark",
+    return_value=_make_mock_pi(),
+)
+@patch(
+    "mlsec_benchmark_suite.adapters.spectral_adapter.run_benchmark", return_value=_make_mock_sp()
+)
 def test_run_all_continues_on_adapter_failure(mock_sp, mock_pi, mock_hf, mock_iam, tmp_path):
     output = tmp_path / "partial_results.json"
-    main([
-        "run-all",
-        "--output", output.as_posix(),
-        "--fixtures-dir", FIXTURES_DIR.as_posix(),
-    ])
+    main(
+        [
+            "run-all",
+            "--output",
+            output.as_posix(),
+            "--fixtures-dir",
+            FIXTURES_DIR.as_posix(),
+        ]
+    )
 
     assert output.exists()
     result = json.loads(output.read_text(encoding="utf-8"))

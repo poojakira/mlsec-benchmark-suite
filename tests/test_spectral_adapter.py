@@ -87,6 +87,12 @@ def test_adapter_is_reproducible():
     result2 = run_benchmark()
 
     # Same seed should produce same poison indices
-    assert result1["results"]["spectral"]["poison_indices"] == result2["results"]["spectral"]["poison_indices"]
+    assert (
+        result1["results"]["spectral"]["poison_indices"]
+        == result2["results"]["spectral"]["poison_indices"]
+    )
     # Same detection results (mock is deterministic given same input)
-    assert result1["results"]["spectral"]["detected_indices"] == result2["results"]["spectral"]["detected_indices"]
+    assert (
+        result1["results"]["spectral"]["detected_indices"]
+        == result2["results"]["spectral"]["detected_indices"]
+    )
