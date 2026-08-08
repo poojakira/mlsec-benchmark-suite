@@ -1,0 +1,11 @@
+{
+  "model_type": "llama",
+  "architectures": ["LlamaForCausalLM"],
+  "hidden_size": 4096,
+  "num_attention_heads": 32,
+  "num_hidden_layers": 32,
+  "weights_url": "http://untrusted-host.example.com/model.bin",
+  "weights_format": "pickle",
+  "no_signature": true,
+  "torch_dtype": "float16"
+}
