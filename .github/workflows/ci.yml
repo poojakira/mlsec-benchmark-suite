@@ -24,6 +24,8 @@ jobs:
         run: python -m ruff check .
       - name: Test
         run: python -m pytest
+      - name: Install portfolio tools
+        run: pip install aws-agent-identity-guard
       - name: Signed smoke benchmark
         env:
           MLSEC_BENCH_SIGNING_KEY: ci-smoke-signing-key
