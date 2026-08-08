@@ -1,10 +1,8 @@
 """Tests for the HF scanner benchmark adapter."""
 
-import json
 from pathlib import Path
 from unittest.mock import patch
 
-import pytest
 
 FIXTURES_DIR = Path(__file__).resolve().parent.parent / "fixtures" / "hf_configs"
 
@@ -15,13 +13,24 @@ def _mock_analyze_config_file(path: str):
     if "bad_pickle_exec" in path_str:
         return [{"rule": "HF001", "severity": "critical", "message": "Pickle execution detected"}]
     elif "bad_unsigned_weights" in path_str:
-        return [{"rule": "HF002", "severity": "high", "message": "Unsigned weights from untrusted source"}]
+        return [
+            {
+                "rule": "HF002",
+                "severity": "high",
+                "message": "Unsigned weights from untrusted source",
+            }
+        ]
     elif "bad_suspicious_url" in path_str:
-        return [{"rule": "HF003", "severity": "high", "message": "Suspicious external URL in auto_map"}]
+        return [
+            {"rule": "HF003", "severity": "high", "message": "Suspicious external URL in auto_map"}
+        ]
     return []
 
 
-@patch("mlsec_benchmark_suite.adapters.hf_scanner_adapter.analyze_config_file", _mock_analyze_config_file)
+@patch(
+    "mlsec_benchmark_suite.adapters.hf_scanner_adapter.analyze_config_file",
+    _mock_analyze_config_file,
+)
 def test_adapter_produces_valid_result():
     from mlsec_benchmark_suite.adapters.hf_scanner_adapter import run_benchmark
 
@@ -36,7 +45,10 @@ def test_adapter_produces_valid_result():
     assert result["signature"]["payload_sha256"]
 
 
-@patch("mlsec_benchmark_suite.adapters.hf_scanner_adapter.analyze_config_file", _mock_analyze_config_file)
+@patch(
+    "mlsec_benchmark_suite.adapters.hf_scanner_adapter.analyze_config_file",
+    _mock_analyze_config_file,
+)
 def test_adapter_detects_all_bad_configs():
     from mlsec_benchmark_suite.adapters.hf_scanner_adapter import run_benchmark
 
@@ -48,7 +60,10 @@ def test_adapter_detects_all_bad_configs():
     assert metrics["total_fn"] == 0
 
 
-@patch("mlsec_benchmark_suite.adapters.hf_scanner_adapter.analyze_config_file", _mock_analyze_config_file)
+@patch(
+    "mlsec_benchmark_suite.adapters.hf_scanner_adapter.analyze_config_file",
+    _mock_analyze_config_file,
+)
 def test_adapter_has_no_false_positives():
     from mlsec_benchmark_suite.adapters.hf_scanner_adapter import run_benchmark
 
@@ -60,7 +75,10 @@ def test_adapter_has_no_false_positives():
     assert metrics["total_fp"] == 0
 
 
-@patch("mlsec_benchmark_suite.adapters.hf_scanner_adapter.analyze_config_file", _mock_analyze_config_file)
+@patch(
+    "mlsec_benchmark_suite.adapters.hf_scanner_adapter.analyze_config_file",
+    _mock_analyze_config_file,
+)
 def test_clean_configs_produce_zero_findings():
     from mlsec_benchmark_suite.adapters.hf_scanner_adapter import run_benchmark
 
@@ -76,7 +94,10 @@ def test_clean_configs_produce_zero_findings():
         assert fixture["detected_findings"] == 0
 
 
-@patch("mlsec_benchmark_suite.adapters.hf_scanner_adapter.analyze_config_file", _mock_analyze_config_file)
+@patch(
+    "mlsec_benchmark_suite.adapters.hf_scanner_adapter.analyze_config_file",
+    _mock_analyze_config_file,
+)
 def test_bad_configs_produce_findings():
     from mlsec_benchmark_suite.adapters.hf_scanner_adapter import run_benchmark
 

@@ -24,7 +24,15 @@ FIXTURES_DIR = Path(__file__).resolve().parent.parent.parent.parent / "fixtures"
 GROUND_TRUTH: dict[str, set[str]] = {
     "clean_bedrock_invoke.json": set(),
     "bad_bedrock_wildcard.json": {"AIG003", "AIG006", "AIG008", "AIG013", "AIG015"},
-    "bad_lambda_passrole.json": {"AIG003", "AIG004", "AIG005", "AIG006", "AIG010", "AIG013", "AIG016"},
+    "bad_lambda_passrole.json": {
+        "AIG003",
+        "AIG004",
+        "AIG005",
+        "AIG006",
+        "AIG010",
+        "AIG013",
+        "AIG016",
+    },
 }
 
 
@@ -115,9 +123,7 @@ def run_benchmark(fixtures_dir: Path | None = None) -> dict[str, Any]:
     )
 
     created_at = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
-    run_id = hashlib.sha256(
-        f"iam-lint-adapter:{created_at}".encode()
-    ).hexdigest()[:16]
+    run_id = hashlib.sha256(f"iam-lint-adapter:{created_at}".encode()).hexdigest()[:16]
 
     # Dataset hash from fixture contents
     fixture_hashes = []

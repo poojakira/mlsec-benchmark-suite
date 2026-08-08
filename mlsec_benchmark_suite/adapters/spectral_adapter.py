@@ -51,7 +51,9 @@ def _generate_synthetic_data(
     samples_per_cluster = n_samples // 2
 
     cluster_0 = rng.standard_normal((samples_per_cluster, n_features))
-    cluster_1 = rng.standard_normal((n_samples - samples_per_cluster, n_features)) + cluster_separation
+    cluster_1 = (
+        rng.standard_normal((n_samples - samples_per_cluster, n_features)) + cluster_separation
+    )
 
     features = np.vstack([cluster_0, cluster_1])
     labels = np.array([0] * samples_per_cluster + [1] * (n_samples - samples_per_cluster))
@@ -89,9 +91,7 @@ def run_benchmark(config: dict[str, Any] | None = None) -> dict[str, Any]:
             "Install with: pip install dataset-poisoning-detector"
         )
     if np is None:
-        raise ImportError(
-            "numpy is not installed. Install with: pip install numpy"
-        )
+        raise ImportError("numpy is not installed. Install with: pip install numpy")
     config = config or DEFAULT_CONFIG
 
     # Generate synthetic data
@@ -132,22 +132,14 @@ def run_benchmark(config: dict[str, Any] | None = None) -> dict[str, Any]:
 
     precision = tp_count / (tp_count + fp_count) if (tp_count + fp_count) > 0 else 1.0
     recall = tp_count / (tp_count + fn_count) if (tp_count + fn_count) > 0 else 1.0
-    f1 = (
-        2 * precision * recall / (precision + recall)
-        if (precision + recall) > 0
-        else 0.0
-    )
+    f1 = 2 * precision * recall / (precision + recall) if (precision + recall) > 0 else 0.0
     detection_rate = tp_count / data["n_poison"] if data["n_poison"] > 0 else 0.0
 
     created_at = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
-    run_id = hashlib.sha256(
-        f"spectral-adapter:{created_at}".encode()
-    ).hexdigest()[:16]
+    run_id = hashlib.sha256(f"spectral-adapter:{created_at}".encode()).hexdigest()[:16]
 
     # Hash the config for reproducibility
-    config_hash = hashlib.sha256(
-        json.dumps(config, sort_keys=True).encode()
-    ).hexdigest()
+    config_hash = hashlib.sha256(json.dumps(config, sort_keys=True).encode()).hexdigest()
 
     # Dataset is synthetic, hash the generation parameters
     dataset_hash = hashlib.sha256(

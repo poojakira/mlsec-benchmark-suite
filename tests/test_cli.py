@@ -19,23 +19,25 @@ IDENTITY = {
 def run_smoke(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     monkeypatch.setenv("MLSEC_BENCH_SIGNING_KEY", "test-signing-key")
     out = tmp_path / "smoke.json"
-    cli.main([
-        "run-smoke",
-        "--output",
-        out.as_posix(),
-        "--repository",
-        IDENTITY["repository"],
-        "--repository-commit",
-        IDENTITY["repository_commit"],
-        "--artifact-digest",
-        IDENTITY["artifact_digest"],
-        "--model-hash",
-        IDENTITY["model_hash"],
-        "--dependency-lock-hash",
-        IDENTITY["dependency_lock_hash"],
-        "--created-at",
-        IDENTITY["created_at"],
-    ])
+    cli.main(
+        [
+            "run-smoke",
+            "--output",
+            out.as_posix(),
+            "--repository",
+            IDENTITY["repository"],
+            "--repository-commit",
+            IDENTITY["repository_commit"],
+            "--artifact-digest",
+            IDENTITY["artifact_digest"],
+            "--model-hash",
+            IDENTITY["model_hash"],
+            "--dependency-lock-hash",
+            IDENTITY["dependency_lock_hash"],
+            "--created-at",
+            IDENTITY["created_at"],
+        ]
+    )
     return out
 
 
@@ -70,21 +72,23 @@ def test_cli_refuses_to_overwrite_historical_results(tmp_path, monkeypatch):
     out = run_smoke(tmp_path, monkeypatch)
 
     with pytest.raises(FileExistsError):
-        cli.main([
-            "run-smoke",
-            "--output",
-            out.as_posix(),
-            "--repository-commit",
-            IDENTITY["repository_commit"],
-            "--artifact-digest",
-            IDENTITY["artifact_digest"],
-            "--model-hash",
-            IDENTITY["model_hash"],
-            "--dependency-lock-hash",
-            IDENTITY["dependency_lock_hash"],
-            "--created-at",
-            IDENTITY["created_at"],
-        ])
+        cli.main(
+            [
+                "run-smoke",
+                "--output",
+                out.as_posix(),
+                "--repository-commit",
+                IDENTITY["repository_commit"],
+                "--artifact-digest",
+                IDENTITY["artifact_digest"],
+                "--model-hash",
+                IDENTITY["model_hash"],
+                "--dependency-lock-hash",
+                IDENTITY["dependency_lock_hash"],
+                "--created-at",
+                IDENTITY["created_at"],
+            ]
+        )
 
 
 def test_report_is_generated_from_result_json(tmp_path, monkeypatch):

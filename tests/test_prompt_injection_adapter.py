@@ -6,17 +6,31 @@ from unittest.mock import patch
 def _mock_detect_injection(text: str):
     """Mock that detects common injection patterns."""
     injection_indicators = [
-        "ignore", "previous instructions", "system prompt",
-        "developer mode", "DAN", "disregard", "override",
-        "im_end", "im_start", "PWNED", "HACKED",
-        "new persona", "no longer an AI", "malware",
-        "Execute:", "rm -rf",
+        "ignore",
+        "previous instructions",
+        "system prompt",
+        "developer mode",
+        "DAN",
+        "disregard",
+        "override",
+        "im_end",
+        "im_start",
+        "PWNED",
+        "HACKED",
+        "new persona",
+        "no longer an AI",
+        "malware",
+        "Execute:",
+        "rm -rf",
     ]
     is_injection = any(indicator.lower() in text.lower() for indicator in injection_indicators)
     return {"is_injection": is_injection, "confidence": 0.95 if is_injection else 0.05}
 
 
-@patch("mlsec_benchmark_suite.adapters.prompt_injection_adapter.detect_injection", _mock_detect_injection)
+@patch(
+    "mlsec_benchmark_suite.adapters.prompt_injection_adapter.detect_injection",
+    _mock_detect_injection,
+)
 def test_adapter_produces_valid_result():
     from mlsec_benchmark_suite.adapters.prompt_injection_adapter import run_benchmark
 
@@ -31,7 +45,10 @@ def test_adapter_produces_valid_result():
     assert result["signature"]["payload_sha256"]
 
 
-@patch("mlsec_benchmark_suite.adapters.prompt_injection_adapter.detect_injection", _mock_detect_injection)
+@patch(
+    "mlsec_benchmark_suite.adapters.prompt_injection_adapter.detect_injection",
+    _mock_detect_injection,
+)
 def test_adapter_detects_injections():
     from mlsec_benchmark_suite.adapters.prompt_injection_adapter import run_benchmark
 
@@ -43,7 +60,10 @@ def test_adapter_detects_injections():
     assert metrics["total_tp"] >= 8
 
 
-@patch("mlsec_benchmark_suite.adapters.prompt_injection_adapter.detect_injection", _mock_detect_injection)
+@patch(
+    "mlsec_benchmark_suite.adapters.prompt_injection_adapter.detect_injection",
+    _mock_detect_injection,
+)
 def test_adapter_low_false_positive_rate():
     from mlsec_benchmark_suite.adapters.prompt_injection_adapter import run_benchmark
 
@@ -54,7 +74,10 @@ def test_adapter_low_false_positive_rate():
     assert metrics["false_positive_rate"] <= 0.2
 
 
-@patch("mlsec_benchmark_suite.adapters.prompt_injection_adapter.detect_injection", _mock_detect_injection)
+@patch(
+    "mlsec_benchmark_suite.adapters.prompt_injection_adapter.detect_injection",
+    _mock_detect_injection,
+)
 def test_adapter_reports_correct_sample_counts():
     from mlsec_benchmark_suite.adapters.prompt_injection_adapter import (
         BENIGN_SAMPLES,
