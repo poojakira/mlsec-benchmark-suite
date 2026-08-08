@@ -15,7 +15,7 @@ authors = [{name = "Pooja Kiran"}]
 mlsec-benchmark = "mlsec_benchmark_suite.cli:main"
 
 [project.optional-dependencies]
-dev = ["pytest>=8.2", "ruff>=0.8", "build>=1.2", "pip-audit>=2.7", "numpy>=1.24", "aws-agent-identity-guard"]
+dev = ["pytest>=8.2", "ruff>=0.8", "build>=1.2", "pip-audit>=2.7", "numpy>=1.24", "aws-agent-identity-guard @ git+https://github.com/poojakira/aws-agent-identity-guard.git"]
 
 [tool.setuptools.packages.find]
 include = ["mlsec_benchmark_suite*"]
