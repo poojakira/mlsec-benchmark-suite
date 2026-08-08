@@ -113,9 +113,7 @@ def run_benchmark(fixtures_dir: Path | None = None) -> dict[str, Any]:
     )
 
     created_at = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
-    run_id = hashlib.sha256(
-        f"hf-scanner-adapter:{created_at}".encode()
-    ).hexdigest()[:16]
+    run_id = hashlib.sha256(f"hf-scanner-adapter:{created_at}".encode()).hexdigest()[:16]
 
     # Dataset hash from fixture contents
     fixture_hashes = []

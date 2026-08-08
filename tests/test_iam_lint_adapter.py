@@ -69,11 +69,15 @@ def test_cli_run_iam_lint(tmp_path):
     from mlsec_benchmark_suite.cli import main
 
     output = tmp_path / "result.json"
-    main([
-        "run-iam-lint",
-        "--output", output.as_posix(),
-        "--fixtures-dir", FIXTURES_DIR.as_posix(),
-    ])
+    main(
+        [
+            "run-iam-lint",
+            "--output",
+            output.as_posix(),
+            "--fixtures-dir",
+            FIXTURES_DIR.as_posix(),
+        ]
+    )
 
     assert output.exists()
     result = json.loads(output.read_text(encoding="utf-8"))
