@@ -1,7 +1,7 @@
 """Adapter connecting mcp-security-gateway-monitor's prompt injection detector to mlsec-benchmark-suite.
 
 Tests the prompt injection detector against known injection strings (should detect)
-and benign strings (should pass), reporting detection rate metrics.
+and benign strings (should pass), reporting fixture hit-rate metrics.
 """
 
 from __future__ import annotations

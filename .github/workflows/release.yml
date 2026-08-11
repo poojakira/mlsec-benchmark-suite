@@ -21,6 +21,8 @@ jobs:
           python-version: "3.12"
       - name: Install package
         run: python -m pip install -e ".[dev]"
+      - name: Install portfolio adapter dependencies
+        run: python -m pip install git+https://github.com/poojakira/aws-agent-identity-guard.git
       - name: Build wheel
         run: python -m build
       - name: Generate SBOM
@@ -45,4 +47,3 @@ jobs:
           gh attestation sign dist/* --repo "$GITHUB_REPOSITORY"
           gh attestation sign sbom.cdx.json --repo "$GITHUB_REPOSITORY"
           gh attestation sign results/release-smoke.json --repo "$GITHUB_REPOSITORY"
-
