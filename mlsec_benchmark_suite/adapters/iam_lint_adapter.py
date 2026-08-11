@@ -8,6 +8,7 @@ in the suite's JSON schema.
 from __future__ import annotations
 
 import hashlib
+import importlib
 import json
 import platform
 import sys
@@ -15,9 +16,17 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-import aws_agent_identity_guard as ag
+try:
+    ag = importlib.import_module("aws_agent_identity_guard")
+except ImportError:
+    sibling_src = Path(__file__).resolve().parents[2].parent / "aws-agent-identity-guard" / "src"
+    if sibling_src.exists():
+        sys.path.insert(0, sibling_src.as_posix())
+        ag = importlib.import_module("aws_agent_identity_guard")
+    else:
+        ag = None
 
-FIXTURES_DIR = Path(__file__).resolve().parent.parent.parent.parent / "fixtures" / "iam_policies"
+FIXTURES_DIR = Path(__file__).resolve().parents[2] / "fixtures" / "iam_policies"
 
 # Ground truth: each fixture maps to expected rule_ids that should fire.
 # Empty set means the policy is clean (no findings expected).
@@ -96,6 +105,13 @@ def run_benchmark(fixtures_dir: Path | None = None) -> dict[str, Any]:
 
     Returns a result dict conforming to the suite's JSON schema.
     """
+    if ag is None:
+        raise RuntimeError(
+            "aws-agent-identity-guard is required for run-iam-lint. "
+            "Install it with `python -m pip install -e ../aws-agent-identity-guard` "
+            "or install mlsec-benchmark-suite with the dev extras."
+        )
+
     fixtures_dir = fixtures_dir or FIXTURES_DIR
     fixture_results = []
     all_tp = 0

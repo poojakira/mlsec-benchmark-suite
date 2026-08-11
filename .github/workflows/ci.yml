@@ -20,12 +20,12 @@ jobs:
           python-version: "3.12"
       - name: Install package
         run: python -m pip install -e ".[dev]"
+      - name: Install portfolio adapter dependencies
+        run: python -m pip install git+https://github.com/poojakira/aws-agent-identity-guard.git
       - name: Lint
         run: python -m ruff check .
       - name: Test
         run: python -m pytest
-      - name: Install portfolio tools
-        run: pip install aws-agent-identity-guard
       - name: Signed smoke benchmark
         env:
           MLSEC_BENCH_SIGNING_KEY: ci-smoke-signing-key
@@ -43,4 +43,3 @@ jobs:
         run: python -m build
       - name: Audit dependencies
         run: python -m pip_audit -r requirements.txt
-
