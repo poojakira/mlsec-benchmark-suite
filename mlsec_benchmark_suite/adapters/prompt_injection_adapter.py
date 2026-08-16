@@ -1,4 +1,4 @@
-"""Adapter connecting mcp-security-gateway-monitor's prompt injection detector to mlsec-benchmark-suite.
+"""Adapter connecting mcp-agent-security-gateway's prompt injection detector to mlsec-benchmark-suite.
 
 Tests the prompt injection detector against known injection strings (should detect)
 and benign strings (should pass), reporting fixture hit-rate metrics.
@@ -101,8 +101,8 @@ def run_benchmark() -> dict[str, Any]:
     """
     if detect_injection is None:
         raise ImportError(
-            "mcp-security-gateway-monitor is not installed. "
-            "Install with: pip install mcp-security-gateway-monitor"
+            "mcp-agent-security-gateway is not installed. "
+            "Install from https://github.com/poojakira/mcp-agent-security-gateway.git or install that repository editable as a sibling."
         )
     sample_results = []
     all_tp = 0
@@ -161,11 +161,11 @@ def run_benchmark() -> dict[str, Any]:
             "license": "Apache-2.0",
             "version": "0.1.0",
             "dataset_hash": f"sha256:{dataset_hash}",
-            "acquisition": "Manually authored test samples for mcp-security-gateway-monitor",
+            "acquisition": "Manually authored test samples for mcp-agent-security-gateway",
             "split_policy": "All samples used for evaluation; no train/test split needed.",
         },
         "input_identity": {
-            "repository": "poojakira/mcp-security-gateway-monitor",
+            "repository": "poojakira/mcp-agent-security-gateway",
             "repository_commit": "evaluated-locally",
             "artifact_digest": f"sha256:{dataset_hash}",
             "model_hash": "n/a-rule-based",
@@ -180,7 +180,7 @@ def run_benchmark() -> dict[str, Any]:
             "machine": platform.machine(),
             "processor": platform.processor(),
             "adapter": "prompt_injection_adapter",
-            "scanner_package": "mcp-security-gateway-monitor",
+            "scanner_package": "mcp-agent-security-gateway",
         },
         "results": {
             "prompt_injection": {
