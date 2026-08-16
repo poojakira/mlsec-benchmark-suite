@@ -41,7 +41,7 @@ def _evaluate_fixture(
     fixture_name: str, fixture_path: Path, expected: dict[str, Any]
 ) -> dict[str, Any]:
     """Run scanner and compute TP/FP/FN against ground truth."""
-    findings = analyze_config_file(str(fixture_path))
+    findings = analyze_config_file(str(fixture_path), source=fixture_name)
     detected_count = len(findings) if findings else 0
     is_bad = expected["expected_findings"] > 0
 

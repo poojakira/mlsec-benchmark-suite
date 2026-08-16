@@ -6,8 +6,9 @@ from unittest.mock import patch
 FIXTURES_DIR = Path(__file__).resolve().parent.parent / "fixtures" / "hf_configs"
 
 
-def _mock_analyze_config_file(path: str):
+def _mock_analyze_config_file(path: str, source: str):
     """Mock that returns findings for known-bad configs, empty for known-good."""
+    assert source.endswith(".json")
     path_str = str(path)
     if "bad_pickle_exec" in path_str:
         return [{"rule": "HF001", "severity": "critical", "message": "Pickle execution detected"}]

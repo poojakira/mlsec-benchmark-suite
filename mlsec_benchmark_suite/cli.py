@@ -390,6 +390,11 @@ def main(argv: list[str] | None = None) -> int:
         default=Path(__file__).resolve().parent.parent / "fixtures",
     )
     run_all.add_argument("--overwrite", action="store_true")
+    run_all.add_argument(
+        "--allow-partial",
+        action="store_true",
+        help="Return success even when one or more adapters fail.",
+    )
 
     index = sub.add_parser("build-index")
     index.add_argument("--results-dir", type=Path, default=Path("results"))
@@ -547,7 +552,7 @@ def main(argv: list[str] | None = None) -> int:
             f"\nrun-all complete: {len(combined_results)} adapters succeeded, {len(errors)} failed"
         )
         print(f"Results written to {args.output}")
-        return 0
+        return 0 if not errors or args.allow_partial else 1
     raise AssertionError(args.command)
 
 
