@@ -9,7 +9,7 @@ Pytest-based regression harness for the ML security portfolio. Wraps each tool's
 | `iam_lint_adapter`        | aws-agent-identity-guard          | IAM policy JSON    |
 | `hf_scanner_adapter`      | hf-model-provenance-scanner       | HF model configs   |
 | `prompt_injection_adapter`| llm-redteam-framework classifier  | Prompt strings     |
-| `spectral_adapter`        | API spec linter                   | OpenAPI specs      |
+| `spectral_adapter`        | dataset-poisoning-detector        | Poisoned datasets  |
 
 ## How It Works
 
@@ -44,14 +44,14 @@ fixtures/
   hf_configs/            HuggingFace config test fixtures
 schemas/
   result.schema.json     JSON Schema for adapter output
-tests/                   28 test functions across 6 test files
+tests/                   29 test functions across 6 test files
 reports/                 Generated HTML reports
 ```
 
 ## Test Coverage
 
 - 6 test modules: adapter-specific tests + CLI tests + integration (`test_run_all.py`)
-- 28 test functions total
+- 29 test functions total
 - Exercises all 4 adapters end-to-end
 
 ## Requirements
