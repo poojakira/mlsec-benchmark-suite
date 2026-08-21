@@ -1,4 +1,4 @@
-# RUNBOOK — mlsec-benchmark-suite
+# RUNBOOK  --  mlsec-benchmark-suite
 
 ## Prerequisites
 
@@ -32,9 +32,9 @@ pytest benchmarks/ -v --durations=10
 
 ## Interpret Output
 
-- **PASSED** — tool executed correctly and produced expected output format
-- **FAILED** — tool crashed, returned malformed output, or exceeded timeout
-- **SKIPPED** — dependency not available (check skip reason in output)
+- **PASSED**  --  tool executed correctly and produced expected output format
+- **FAILED**  --  tool crashed, returned malformed output, or exceeded timeout
+- **SKIPPED**  --  dependency not available (check skip reason in output)
 
 Key metrics in `results/benchmark_report.json`:
 | Field | Meaning |
