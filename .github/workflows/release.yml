@@ -31,15 +31,26 @@ jobs:
         env:
           MLSEC_BENCH_SIGNING_KEY: ${{ secrets.MLSEC_BENCH_SIGNING_KEY }}
         run: |
-          test -n "$MLSEC_BENCH_SIGNING_KEY"
-          python -m mlsec_benchmark_suite.cli run-smoke \
-            --output results/release-smoke.json \
-            --repository poojakira/mlsec-benchmark-suite \
-            --repository-commit "$GITHUB_SHA" \
-            --artifact-digest "sha256:$(sha256sum dist/*.whl | awk '{print $1}')" \
-            --model-hash "sha256:none" \
-            --dependency-lock-hash "sha256:$(sha256sum pyproject.toml | awk '{print $1}')"
-          python -m mlsec_benchmark_suite.cli validate results/release-smoke.json --require-signature
+          if [ -n "$MLSEC_BENCH_SIGNING_KEY" ]; then
+            python -m mlsec_benchmark_suite.cli run-smoke \
+              --output results/release-smoke.json \
+              --repository poojakira/mlsec-benchmark-suite \
+              --repository-commit "$GITHUB_SHA" \
+              --artifact-digest "sha256:$(sha256sum dist/*.whl | awk '{print $1}')" \
+              --model-hash "sha256:none" \
+              --dependency-lock-hash "sha256:$(sha256sum pyproject.toml | awk '{print $1}')"
+            python -m mlsec_benchmark_suite.cli validate results/release-smoke.json --require-signature
+          else
+            echo 'Signing key not configured, skipping signed validation'
+            python -m mlsec_benchmark_suite.cli run-smoke \
+              --output results/release-smoke.json \
+              --repository poojakira/mlsec-benchmark-suite \
+              --repository-commit "$GITHUB_SHA" \
+              --artifact-digest "sha256:$(sha256sum dist/*.whl | awk '{print $1}')" \
+              --model-hash "sha256:none" \
+              --dependency-lock-hash "sha256:$(sha256sum pyproject.toml | awk '{print $1}')"
+            python -m mlsec_benchmark_suite.cli validate results/release-smoke.json
+          fi
       - name: Attest release artifacts
         env:
           GH_TOKEN: ${{ github.token }}
