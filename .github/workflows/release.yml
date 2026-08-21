@@ -52,9 +52,10 @@ jobs:
             python -m mlsec_benchmark_suite.cli validate results/release-smoke.json
           fi
       - name: Attest release artifacts
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh attestation sign dist/* --repo "$GITHUB_REPOSITORY"
-          gh attestation sign sbom.cdx.json --repo "$GITHUB_REPOSITORY"
-          gh attestation sign results/release-smoke.json --repo "$GITHUB_REPOSITORY"
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: |
+            dist/*
+            sbom.cdx.json
+            results/release-smoke.json
