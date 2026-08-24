@@ -1,0 +1,45 @@
+# Version control
+.git
+.gitignore
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+*.egg-info
+.eggs
+dist
+build
+
+# Virtual environments
+.venv
+.venv-quick
+venv
+env
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Testing and caches
+.pytest_cache
+.mypy_cache
+.ruff_cache
+.coverage
+htmlcov
+coverage.xml
+
+# Results and reports (generated at runtime)
+results/*.json
+reports/*.md
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Secrets
+.env
+.env.*
+.secrets.baseline
