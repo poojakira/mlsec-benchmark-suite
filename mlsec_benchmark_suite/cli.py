@@ -80,7 +80,7 @@ def sign_payload(payload: dict[str, Any], key: str | None) -> dict[str, str]:
     digest = hash_json(unsigned)
     if not key:
         return {"algorithm": "unsigned", "payload_sha256": digest, "value": ""}
-    value = hmac.new(key.encode("utf-8"), digest.encode("ascii"), hashlib.sha256).hexdigest()
+    value = hmac.new(key.encode("utf-8"), digest.encode("ascii"), digestmod=hashlib.sha256).hexdigest()
     return {"algorithm": "hmac-sha256", "payload_sha256": digest, "value": value}
 
 
