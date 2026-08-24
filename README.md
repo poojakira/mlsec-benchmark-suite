@@ -1,40 +1,26 @@
 # mlsec-benchmark-suite
 
-A reproducible regression harness that tests your ML security tools against versioned fixtures and catches breakage before it ships.
+Regression harness that runs multiple ML security tools against versioned fixtures and catches cross-repo breakage before it ships.
 
 ---
 
-## The Problem No One Notices Until It's Too Late
+## What Problem This Solves
 
-You maintain four ML security tools across separate repositories. Each has its own test suite and passes in isolation. One Tuesday, a refactor in the IAM policy linter changes its JSON output format. Its own tests still pass (they were updated in the same PR). But downstream, the prompt injection classifier that parses that output silently starts dropping findings. You don't discover this until a security review three weeks later.
+I maintain several ML security tools in separate repos. Each has its own tests, and each passes in isolation. But when one tool changes its output format, downstream tools that consume that output break silently. You don't find out until someone notices missing findings weeks later.
 
-This benchmark suite exists to catch that scenario. It wraps each tool's CLI in a typed adapter, runs it against frozen inputs, and validates that outputs still conform to a shared schema. If any tool drifts from its contract, you know within minutes, not weeks.
-
----
-
-## Executive Summary
-
-This repository is for teams that maintain multiple ML security tools and need a single place to verify they all still work correctly together.
-
-It solves a coordination problem: when tools evolve independently, their integration points can break without anyone noticing. Traditional unit tests verify internal correctness, but they cannot detect cross-tool regressions. This harness fills that gap by running each tool against known-good and known-bad fixtures and checking that results match a shared contract.
-
-Target audience:
-- ML security engineers maintaining tool portfolios
-- Platform teams responsible for shipping multiple security scanners
-- CI systems that need a single "did anything break across the portfolio?" gate
+This suite wraps each tool's CLI in a typed adapter, runs it against frozen inputs, and validates outputs against a shared JSON schema. If any tool drifts from its contract, `pytest` fails immediately. One command tells you whether the portfolio still works as a whole.
 
 ---
 
-## Why This Repository Exists
+## How It Works
 
-When you build multiple security tools in separate repositories, several questions become hard to answer:
+- Typed adapters wrap each tool's CLI interface
+- Versioned fixtures provide known-good and known-bad inputs
+- Contracts define expected pass/fail behavior per fixture
+- JSON Schema validation ensures output format consistency
+- A single `pytest` run exercises all tools and produces HTML reports
 
-- "Did my latest change to tool A break the assumptions tool B makes about its output?"
-- "Are all four tools producing results in the same schema version?"
-- "If I add a fifth tool next month, how do I wire it into regression testing without rewriting infrastructure?"
-- "Can I prove to auditors that the portfolio was tested as a whole, not just piecemeal?"
-
-This repository answers all of them with a single `pytest` run.
+Adding a new tool means writing one adapter file and dropping fixtures into the right directory. No infrastructure changes needed.
 
 ---
 
