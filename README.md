@@ -271,6 +271,13 @@ Total: 29 test functions across 6 test modules.
 
 ---
 
+
+## Additional Documentation
+
+- [INCIDENT_RUNBOOK.md](INCIDENT_RUNBOOK.md) - benchmark infrastructure incident response
+- [docs/CONTINUOUS_TRACKING.md](docs/CONTINUOUS_TRACKING.md) - how continuous trend tracking works
+- [mlsec_benchmark_suite/tracker.py](mlsec_benchmark_suite/tracker.py) - trend analysis and regression detection
+
 ## License and Author
 
 **License**: Apache-2.0
