@@ -65,7 +65,7 @@ Component responsibilities:
 | `reports/` | Generated HTML reports for human review. |
 | `dashboard/` | Static HTML page served via GitHub Pages for at-a-glance status. |
 | `datasets/` | Fixture set manifests describing which inputs belong to which test suites. |
-| `tests/` | 29 test functions across 6 modules covering all adapters, CLI, and integration. |
+| `tests/` | 54 test functions across 7 test modules covering all adapters, CLI, and integration. |
 
 ---
 
@@ -218,7 +218,7 @@ mlsec-benchmark validate
 | Cross-adapter integration | All fixture types | `test_run_all.py` |
 | CLI interface | Subcommand invocations | `test_cli.py` |
 
-Total: 29 test functions across 6 test modules.
+Total: 54 test functions across 7 test modules.
 
 **Limitations:**
 - The suite tests tools against static, curated fixtures. It does not measure real-world detection rates or false positive rates on production data.
