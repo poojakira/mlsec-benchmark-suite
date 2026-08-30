@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import tempfile
 from pathlib import Path
 
 import pytest
@@ -18,7 +17,6 @@ from mlsec_benchmark_suite.tracker import (
     load_historical_results,
     run_tracking,
 )
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
