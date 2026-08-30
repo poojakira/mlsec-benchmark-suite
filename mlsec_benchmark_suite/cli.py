@@ -120,7 +120,7 @@ def mean_ci(values: list[float]) -> dict[str, float]:
 
 
 def category_smoke(category: str, seed: int) -> dict[str, Any]:
-    rng = random.Random(f"{category}:{seed}")
+    rng = random.Random(f"{category}:{seed}")  # nosec B311 - deterministic benchmark sampling, not security-sensitive
     samples = [rng.random() for _ in range(12)]
     failures = sum(1 for value in samples if value < 0.03)
     base = mean_ci(samples)

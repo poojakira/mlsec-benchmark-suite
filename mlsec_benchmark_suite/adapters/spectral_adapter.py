@@ -96,11 +96,11 @@ def run_benchmark(config: dict[str, Any] | None = None) -> dict[str, Any]:
 
     # Generate synthetic data
     data = _generate_synthetic_data(
-        n_samples=config["n_samples"],
-        n_features=config["n_features"],
+        n_samples=int(config["n_samples"]),
+        n_features=int(config["n_features"]),
         cluster_separation=config["cluster_separation"],
         poison_rate=config["poison_rate"],
-        random_seed=config["random_seed"],
+        random_seed=int(config["random_seed"]),
     )
 
     # Run spectral detection
@@ -118,7 +118,7 @@ def run_benchmark(config: dict[str, Any] | None = None) -> dict[str, Any]:
         scores = []
 
     poison_set = set(data["poison_indices"])
-    all_indices = set(range(config["n_samples"]))
+    all_indices = set(range(int(config["n_samples"])))
     clean_indices = all_indices - poison_set
 
     # Compute metrics

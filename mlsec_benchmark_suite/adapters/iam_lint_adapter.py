@@ -16,6 +16,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+ag: Any
 try:
     ag = importlib.import_module("aws_agent_identity_guard")
 except ImportError:
