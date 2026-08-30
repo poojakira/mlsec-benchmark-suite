@@ -91,7 +91,18 @@ jobs:
 
       - name: Run benchmark suite
         run: |
-          python -m mlsec_benchmark_suite.runner --output results/
+          COMMIT="${GITHUB_SHA}"
+          DIGEST="sha256:$(git rev-parse HEAD)"
+          MODEL_HASH="sha256:$(printf '%s' "$COMMIT" | sha256sum | cut -d' ' -f1)"
+          LOCK_HASH="sha256:$(sha256sum requirements.txt 2>/dev/null | cut -d' ' -f1 || echo none)"
+          python -m mlsec_benchmark_suite run-smoke \
+            --output results/smoke-result.json \
+            --repository "${GITHUB_REPOSITORY}" \
+            --repository-commit "${COMMIT}" \
+            --artifact-digest "${DIGEST}" \
+            --model-hash "${MODEL_HASH}" \
+            --dependency-lock-hash "${LOCK_HASH}" \
+            --overwrite
 
       - name: Run trend analysis
         run: |
