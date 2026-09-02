@@ -70,25 +70,30 @@ def test_missing_evidence_fails_validation(tmp_path, monkeypatch):
 
 def test_cli_refuses_to_overwrite_historical_results(tmp_path, monkeypatch):
     out = run_smoke(tmp_path, monkeypatch)
+    before = out.read_text(encoding="utf-8")
 
-    with pytest.raises(FileExistsError):
-        cli.main(
-            [
-                "run-smoke",
-                "--output",
-                out.as_posix(),
-                "--repository-commit",
-                IDENTITY["repository_commit"],
-                "--artifact-digest",
-                IDENTITY["artifact_digest"],
-                "--model-hash",
-                IDENTITY["model_hash"],
-                "--dependency-lock-hash",
-                IDENTITY["dependency_lock_hash"],
-                "--created-at",
-                IDENTITY["created_at"],
-            ]
-        )
+    # main() now handles expected errors cleanly: it returns a non-zero exit
+    # code and prints a readable message instead of raising a raw traceback.
+    exit_code = cli.main(
+        [
+            "run-smoke",
+            "--output",
+            out.as_posix(),
+            "--repository-commit",
+            IDENTITY["repository_commit"],
+            "--artifact-digest",
+            IDENTITY["artifact_digest"],
+            "--model-hash",
+            IDENTITY["model_hash"],
+            "--dependency-lock-hash",
+            IDENTITY["dependency_lock_hash"],
+            "--created-at",
+            IDENTITY["created_at"],
+        ]
+    )
+    assert exit_code == 2
+    # The existing artifact must be left untouched.
+    assert out.read_text(encoding="utf-8") == before
 
 
 def test_report_is_generated_from_result_json(tmp_path, monkeypatch):

@@ -324,7 +324,7 @@ def build_index(results_dir: Path) -> dict[str, Any]:
     }
 
 
-def main(argv: list[str] | None = None) -> int:
+def _dispatch(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="mlsec-benchmark")
     sub = parser.add_subparsers(dest="command", required=True)
     run = sub.add_parser("run-smoke")
@@ -561,6 +561,21 @@ def main(argv: list[str] | None = None) -> int:
         print(f"Results written to {args.output}")
         return 0 if not errors or args.allow_partial else 1
     raise AssertionError(args.command)
+
+
+def main(argv: list[str] | None = None) -> int:
+    """CLI entrypoint with clean error handling (no raw tracebacks on
+    expected failures such as schema-validation or existing-file errors).
+
+    Note: ``validate`` and ``report`` operate on ``run-smoke`` outputs, which
+    carry the full provenance schema. Raw ``run-all``/``run-<adapter>`` outputs
+    are aggregate metrics only and are not valid inputs to ``validate``.
+    """
+    try:
+        return _dispatch(argv)
+    except (ValueError, FileExistsError, KeyError, FileNotFoundError) as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
 
 
 if __name__ == "__main__":
