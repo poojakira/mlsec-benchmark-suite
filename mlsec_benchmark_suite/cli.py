@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
-import hmac
+import hmac as _hmac  # aliased to avoid shadowing in sign_payload
 import json
 import math
 import os
@@ -80,8 +80,14 @@ def sign_payload(payload: dict[str, Any], key: str | None) -> dict[str, str]:
     digest = hash_json(unsigned)
     if not key:
         return {"algorithm": "unsigned", "payload_sha256": digest, "value": ""}
-    value = hmac.new(key.encode("utf-8"), digest.encode("ascii"), digestmod=hashlib.sha256).hexdigest()
-    return {"algorithm": "hmac-sha256", "payload_sha256": digest, "value": value}
+    # Use explicit keyword args (key=, msg=, digestmod=) to prevent argument-order bugs.
+    # _hmac.new() is the three-argument HMAC constructor from the stdlib hmac module.
+    mac_value = _hmac.new(
+        key=key.encode("utf-8"),
+        msg=digest.encode("ascii"),
+        digestmod=hashlib.sha256,
+    ).hexdigest()
+    return {"algorithm": "hmac-sha256", "payload_sha256": digest, "value": mac_value}
 
 
 def verify_signature(payload: dict[str, Any], key: str | None) -> bool:
@@ -91,7 +97,8 @@ def verify_signature(payload: dict[str, Any], key: str | None) -> bool:
         return False
     if signature.get("algorithm") == "unsigned":
         return not key and signature.get("value") == ""
-    return bool(key) and hmac.compare_digest(signature.get("value", ""), expected["value"])
+    # hmac.compare_digest performs a timing-safe comparison to prevent timing attacks.
+    return bool(key) and _hmac.compare_digest(signature.get("value", ""), expected["value"])
 
 
 def environment() -> dict[str, str]:
