@@ -10,6 +10,7 @@ build/
 dist/
 
 .venv/
+.venv-audit/
 .coverage
 __pycache__/
 *.pyc

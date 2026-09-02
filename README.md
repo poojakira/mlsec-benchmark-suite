@@ -57,7 +57,7 @@ Component responsibilities:
 | Component | What it does |
 |-----------|-------------|
 | `mlsec_benchmark_suite/adapters/` | Typed Python wrappers (one per tool) that invoke each tool's CLI and normalize the output into a common structure. Each adapter is roughly 8-9 KB of focused integration code. |
-| `mlsec_benchmark_suite/cli.py` | CLI entrypoint exposing `run`, `report`, and `validate` subcommands. |
+| `mlsec_benchmark_suite/cli.py` | CLI entrypoint (`mlsec-benchmark` / `python -m mlsec_benchmark_suite`) exposing `run-smoke`, `run-all`, `run-iam-lint`, `run-hf-scanner`, `run-prompt-injection`, `run-spectral`, `validate`, `report`, and `build-index` subcommands. |
 | `contracts/portfolio-smoke-v1.json` | Declares which fixtures should pass and which should fail for each adapter. This is the source of truth for expected behavior. |
 | `fixtures/` | Versioned input files (IAM policy JSON, HuggingFace model configs, prompt strings, poisoned datasets) that tools are tested against. |
 | `schemas/result.schema.json` | JSON Schema that every adapter output must validate against. Enforces structural consistency across the portfolio. |
@@ -71,7 +71,7 @@ Component responsibilities:
 
 ## End-to-End Workflow: How Benchmarks Run
 
-1. **Invoke**: You run `pytest tests/ -q` or `python -m mlsec_benchmark_suite run --suite smoke`. The CLI (or pytest) discovers all registered adapters.
+1. **Invoke**: You run `pytest tests/ -q` or a CLI benchmark such as `python -m mlsec_benchmark_suite run-smoke ...`. The CLI (or pytest) discovers all registered adapters.
 
 2. **Load contracts**: The runner reads `contracts/portfolio-smoke-v1.json` to determine which fixtures to feed each adapter and what the expected outcome should be (pass or fail).
 
@@ -154,14 +154,20 @@ pytest tests/ -q
 # Run only the IAM adapter tests
 pytest tests/test_iam_lint_adapter.py -v
 
-# Run via the CLI entrypoint
-python -m mlsec_benchmark_suite run --suite smoke
+# Run the deterministic smoke benchmark via the CLI entrypoint.
+# run-smoke requires provenance metadata for the result record:
+python -m mlsec_benchmark_suite run-smoke \
+  --output results/smoke.json \
+  --repository-commit abc123 \
+  --artifact-digest sha256:deadbeef \
+  --model-hash sha256:cafebabe \
+  --dependency-lock-hash sha256:feedface
 
-# Generate a report
-python -m mlsec_benchmark_suite report
+# Validate a result file against the JSON schema
+python -m mlsec_benchmark_suite validate results/smoke.json
 
-# Validate results against schema
-python -m mlsec_benchmark_suite validate
+# Generate a markdown report from a result file
+python -m mlsec_benchmark_suite report results/smoke.json --output reports/report.md
 ```
 
 ## Usage Examples
@@ -176,12 +182,24 @@ Run a single adapter's tests in isolation:
 pytest tests/test_hf_scanner_adapter.py -v --tb=short
 ```
 
-Use the installed CLI command directly:
+Use the installed CLI command directly (`mlsec-benchmark` is registered via `[project.scripts]`):
 ```bash
-mlsec-benchmark run --suite smoke
-mlsec-benchmark report
-mlsec-benchmark validate
+# Run all adapter benchmarks into one combined result file
+mlsec-benchmark run-all --output results/combined.json
+
+# Run a single adapter benchmark
+mlsec-benchmark run-iam-lint --output results/iam_lint.json
+mlsec-benchmark run-hf-scanner --output results/hf_scanner.json
+mlsec-benchmark run-prompt-injection --output results/prompt_injection.json
+mlsec-benchmark run-spectral --output results/spectral.json
+
+# Validate, report, and index result files
+mlsec-benchmark validate results/combined.json
+mlsec-benchmark report results/combined.json --output reports/report.md
+mlsec-benchmark build-index --results-dir results --output results/index.json
 ```
+
+See [RUNBOOK.md](RUNBOOK.md) for the full operational reference for every subcommand.
 
 ---
 
@@ -233,7 +251,7 @@ Total: 54 test functions across 7 test modules.
 | Criterion | Status | Notes |
 |-----------|--------|-------|
 | Automated CI | Yes | GitHub Actions workflow + Dependabot |
-| Test coverage | 29 functions, all 4 adapters exercised end-to-end | No coverage gaps in adapter layer |
+| Test coverage | 54 test functions across 7 modules, all 4 adapters exercised end-to-end | No coverage gaps in adapter layer |
 | Schema validation | Enforced on every run | Catches output drift automatically |
 | Contract versioning | `portfolio-smoke-v1.json` | Versioned filename allows schema evolution |
 | Dependency hygiene | Zero runtime deps, pip-audit in CI | Minimal supply chain risk |
