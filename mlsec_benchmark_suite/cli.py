@@ -565,14 +565,28 @@ def _dispatch(argv: list[str] | None = None) -> int:
 
 def main(argv: list[str] | None = None) -> int:
     """CLI entrypoint with clean error handling (no raw tracebacks on
-    expected failures such as schema-validation or existing-file errors).
+    expected failures).
 
-    Note: ``validate`` and ``report`` operate on ``run-smoke`` outputs, which
-    carry the full provenance schema. Raw ``run-all``/``run-<adapter>`` outputs
-    are aggregate metrics only and are not valid inputs to ``validate``.
+    Exit codes:
+      0 - success
+      2 - expected input/validation error (bad schema, existing output file,
+          missing file/key)
+      3 - a required sibling tool/dependency is not installed or importable
+          (e.g. running ``run-hf-scanner`` without ``hf-model-provenance-scanner``)
+
+    Note: ``validate``, ``report`` and ``build-index`` operate on ``run-smoke``
+    (and per-adapter) outputs, which carry the full provenance schema. Raw
+    ``run-all`` output is aggregate metrics only and is NOT a valid input to
+    those commands.
     """
     try:
         return _dispatch(argv)
+    except (ImportError, RuntimeError) as exc:
+        # A required sibling tool is not installed/importable. This is an
+        # expected, actionable condition (not a suite bug): report it cleanly
+        # with a dedicated exit code instead of a raw traceback.
+        print(f"error: dependency unavailable: {exc}", file=sys.stderr)
+        return 3
     except (ValueError, FileExistsError, KeyError, FileNotFoundError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2

@@ -170,6 +170,7 @@ def test_run_all_returns_nonzero_on_adapter_failure(mock_sp, mock_pi, mock_hf, m
     assert len(result["adapters_failed"]) == 1
     assert "hf-scanner" in result["adapters_failed"][0]
 
+
 @patch(
     "mlsec_benchmark_suite.adapters.iam_lint_adapter.run_benchmark", return_value=_make_mock_iam()
 )

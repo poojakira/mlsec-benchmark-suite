@@ -8,17 +8,17 @@ Regression harness that runs multiple ML security tools against versioned fixtur
 
 I maintain several ML security tools in separate repos. Each has its own tests, and each passes in isolation. But when one tool changes its output format, downstream tools that consume that output break silently. You don't find out until someone notices missing findings weeks later.
 
-This suite wraps each tool's CLI in a typed adapter, runs it against frozen inputs, and validates outputs against a shared JSON schema. If any tool drifts from its contract, `pytest` fails immediately. One command tells you whether the portfolio still works as a whole.
+This suite wraps each tool in a typed Python adapter, imports it in-process against frozen inputs, and validates outputs against a shared JSON schema. If any tool drifts from its contract, `pytest` fails immediately. One command tells you whether the portfolio still works as a whole.
 
 ---
 
 ## How It Works
 
-- Typed adapters wrap each tool's CLI interface
+- Typed adapters import each tool's Python module in-process
 - Versioned fixtures provide known-good and known-bad inputs
 - Contracts define expected pass/fail behavior per fixture
 - JSON Schema validation ensures output format consistency
-- A single `pytest` run exercises all tools and produces HTML reports
+- A single `pytest` run exercises all adapters; the `report` subcommand renders Markdown summaries
 
 Adding a new tool means writing one adapter file and dropping fixtures into the right directory. No infrastructure changes needed.
 
@@ -42,7 +42,7 @@ Adding a new tool means writing one adapter file and dropping fixtures into the 
         v                        v
 +------------------+     +------------------+
 |  JSON Schema     |     |  Results (JSON)  |
-|  Validation      |     |  + HTML Reports  |
+|  Validation      |     |  + MD Reports    |
 +------------------+     +------------------+
         |
         v
@@ -56,16 +56,16 @@ Component responsibilities:
 
 | Component | What it does |
 |-----------|-------------|
-| `mlsec_benchmark_suite/adapters/` | Typed Python wrappers (one per tool) that invoke each tool's CLI and normalize the output into a common structure. Each adapter is roughly 8-9 KB of focused integration code. |
+| `mlsec_benchmark_suite/adapters/` | Typed Python wrappers (one per tool) that import each tool's Python module in-process and normalize the output into a common structure. Each adapter is roughly 8-9 KB of focused integration code. |
 | `mlsec_benchmark_suite/cli.py` | CLI entrypoint (`mlsec-benchmark` / `python -m mlsec_benchmark_suite`) exposing `run-smoke`, `run-all`, `run-iam-lint`, `run-hf-scanner`, `run-prompt-injection`, `run-spectral`, `validate`, `report`, and `build-index` subcommands. |
 | `contracts/portfolio-smoke-v1.json` | Declares which fixtures should pass and which should fail for each adapter. This is the source of truth for expected behavior. |
 | `fixtures/` | Versioned input files (IAM policy JSON, HuggingFace model configs, prompt strings, poisoned datasets) that tools are tested against. |
 | `schemas/result.schema.json` | JSON Schema that every adapter output must validate against. Enforces structural consistency across the portfolio. |
 | `results/` | Structured JSON output from each benchmark run. Machine-readable for downstream analysis. |
-| `reports/` | Generated HTML reports for human review. |
+| `reports/` | Generated Markdown reports for human review (via the `report` subcommand). |
 | `dashboard/` | Static HTML page served via GitHub Pages for at-a-glance status. |
 | `datasets/` | Fixture set manifests describing which inputs belong to which test suites. |
-| `tests/` | 54 test functions across 7 test modules covering all adapters, CLI, and integration. |
+| `tests/` | 56 test functions across 7 test modules covering all adapters, CLI, and integration. |
 
 ---
 
@@ -75,15 +75,15 @@ Component responsibilities:
 
 2. **Load contracts**: The runner reads `contracts/portfolio-smoke-v1.json` to determine which fixtures to feed each adapter and what the expected outcome should be (pass or fail).
 
-3. **Execute adapters**: Each adapter shells out to its corresponding tool's CLI (e.g., `iam_lint_adapter` calls `aws-agent-identity-guard`), passing the appropriate fixture files from `fixtures/`.
+3. **Execute adapters**: Each adapter imports its corresponding tool's Python module in-process (e.g., `iam_lint_adapter` imports `aws_agent_identity_guard`) and runs it against the appropriate fixture files from `fixtures/`.
 
-4. **Capture output**: Adapter normalizes the tool's stdout/stderr into a structured JSON result object.
+4. **Capture output**: The adapter normalizes the tool's structured return value into a common JSON result object.
 
 5. **Validate schema**: Each result is validated against `schemas/result.schema.json`. If the tool's output format has drifted, validation fails immediately.
 
 6. **Check contract**: The result (pass/fail/findings count) is compared against the contract's expected behavior. A mismatch is a test failure.
 
-7. **Write results**: Structured JSON goes to `results/`. If running in report mode, an HTML summary is generated in `reports/`.
+7. **Write results**: Structured JSON goes to `results/`. The `report` subcommand renders a Markdown summary to `reports/`.
 
 8. **CI gate**: In GitHub Actions, a non-zero exit code from pytest blocks the merge.
 
@@ -91,8 +91,15 @@ Component responsibilities:
 
 ## Design Decisions and Trade-offs
 
-**Adapters shell out to CLIs rather than importing Python modules directly.**
-Why: The tools under test may be written in different languages, may have conflicting dependencies, or may change their internal APIs without notice. Shelling out to the CLI treats each tool as a black box with a stable interface (its command-line contract). The trade-off is slower execution and the need for each tool to be installed and on PATH.
+**Adapters import each tool's Python module directly (in-process), not via subprocess.**
+Why: every tool in this portfolio is a Python package, so the adapters `import` the
+sibling package (e.g. `iam_lint_adapter` imports `aws_agent_identity_guard` and calls
+`scan_policy_document`) rather than shelling out to a CLI. This is faster, gives typed
+access to structured findings, and avoids brittle stdout parsing. The trade-off is that
+each tool under test must be importable in the same environment: if a sibling package is
+not installed, the adapter raises a clear error and the CLI exits with code 3
+(`dependency unavailable`) rather than a traceback. Each adapter falls back to importing
+from a sibling source checkout next to this repo when the package is not pip-installed.
 
 **Contracts are separate JSON files, not inline assertions in test code.**
 Why: Contracts need to be reviewable by non-developers (security leads, auditors). Keeping them in a declarative JSON format means they can be diffed, version-tracked, and validated independently of test logic. The cost is an extra layer of indirection when debugging a failure.
@@ -139,11 +146,21 @@ pip install -e ".[dev]"
 
 Prerequisites:
 - Python 3.10 or later
-- The sibling tool repositories must be installed and accessible on PATH:
-  - `aws-agent-identity-guard`
-  - `hf-model-provenance-scanner`
-  - `llm-redteam-framework` (classifier module)
-  - `dataset-poisoning-detector`
+- The unit-test suite (`pytest tests/`) runs fully with **no sibling tools installed** —
+  adapter tests mock the sibling modules.
+- Running a *live* per-adapter benchmark (`run-<adapter>`) requires that adapter's
+  sibling package to be importable. Each is optional and only needed for its own command:
+
+  | Command | Requires (Python import) | Sibling repo |
+  |---------|--------------------------|--------------|
+  | `run-iam-lint` | `aws_agent_identity_guard` | `aws-agent-identity-guard` |
+  | `run-hf-scanner` | `scanner.analyzer.config_scanner` | `hf-model-provenance-scanner` |
+  | `run-prompt-injection` | `mcp_monitor.detectors.prompt_injection` | `mcp-agent-security-gateway` |
+  | `run-spectral` | `poison_detector.spectral` + `numpy` | `dataset-poisoning-detector` |
+
+  If a required sibling is not installed, the command exits with code **3**
+  (`dependency unavailable`) and a one-line install hint — no traceback.
+  `run-smoke`, `validate`, `report`, and `build-index` need **no** sibling tools.
 
 ## Quick Start
 
@@ -199,6 +216,17 @@ mlsec-benchmark report results/combined.json --output reports/report.md
 mlsec-benchmark build-index --results-dir results --output results/index.json
 ```
 
+> **Which outputs feed `validate` / `report` / `build-index`.** These commands
+> require the **full provenance schema** produced by `run-smoke` and the
+> per-adapter `run-<adapter>` commands. The `run-all` command intentionally
+> writes an **aggregate-only** record (combined per-adapter metrics, run id,
+> environment) that omits the provenance fields, so `validate`/`report`/
+> `build-index` will reject `run-all` output with `error: result missing
+> fields: [...]` and exit code 2. `build-index` also validates *every* `*.json`
+> in `--results-dir`, so point it at a directory containing only full-schema
+> results. The examples above use `combined.json` for the command shape;
+> substitute a `run-smoke` output for a run that actually validates.
+
 See [RUNBOOK.md](RUNBOOK.md) for the full operational reference for every subcommand.
 
 ---
@@ -207,7 +235,7 @@ See [RUNBOOK.md](RUNBOOK.md) for the full operational reference for every subcom
 
 **Fixture safety**: Test fixtures in `fixtures/` include intentionally malicious inputs (overly permissive IAM policies, prompt injection strings, poisoned dataset samples). These are inert data files, but be aware they exist when reviewing diffs or granting repository access.
 
-**Tool execution**: Adapters shell out to external tool CLIs. If a tool under test is compromised or misconfigured, it will execute with the permissions of the user running the benchmark. Run benchmarks in isolated environments (containers, CI runners) rather than on production machines.
+**Tool execution**: Adapters import the sibling tool's Python module and run it in-process. If a tool under test is compromised or misconfigured, its code executes with the permissions of the user running the benchmark, inside the same interpreter. Run benchmarks in isolated environments (containers, CI runners) rather than on production machines.
 
 **No secrets in fixtures**: The IAM policy fixtures are synthetic. They do not reference real AWS accounts, ARNs, or credentials.
 
@@ -236,11 +264,11 @@ See [RUNBOOK.md](RUNBOOK.md) for the full operational reference for every subcom
 | Cross-adapter integration | All fixture types | `test_run_all.py` |
 | CLI interface | Subcommand invocations | `test_cli.py` |
 
-Total: 54 test functions across 7 test modules.
+Total: 56 test functions across 7 test modules.
 
 **Limitations:**
 - The suite tests tools against static, curated fixtures. It does not measure real-world detection rates or false positive rates on production data.
-- Adapters invoke tools via CLI, so any failure could be a tool bug or an environment issue (missing binary, wrong version). Error messages try to distinguish these but cannot always.
+- Adapters import tools in-process, so a failure could be a tool bug or an environment issue (sibling package not installed, wrong version). A missing sibling is reported distinctly (exit 3, `dependency unavailable`); other failures surface the underlying error.
 - Contract-based testing only catches regressions from previously defined behavior. Novel failure modes require new fixtures and updated contracts.
 - No performance benchmarking beyond timeout detection. Execution time variability across environments means timing assertions would be flaky.
 
@@ -251,16 +279,16 @@ Total: 54 test functions across 7 test modules.
 | Criterion | Status | Notes |
 |-----------|--------|-------|
 | Automated CI | Yes | GitHub Actions workflow + Dependabot |
-| Test coverage | 54 test functions across 7 modules, all 4 adapters exercised end-to-end | No coverage gaps in adapter layer |
+| Test coverage | 56 test functions across 7 modules, all 4 adapters exercised | No coverage gaps in adapter layer |
 | Schema validation | Enforced on every run | Catches output drift automatically |
 | Contract versioning | `portfolio-smoke-v1.json` | Versioned filename allows schema evolution |
 | Dependency hygiene | Zero runtime deps, pip-audit in CI | Minimal supply chain risk |
 | Documentation | README, RUNBOOK, inline contracts | Operational playbook exists |
 | Dashboard | GitHub Pages static site | At-a-glance visibility |
-| Error handling | Skip semantics for missing tools | Graceful degradation when a tool is unavailable |
+| Error handling | Clean exit codes, no tracebacks on expected failures | Missing sibling tool → exit 3; bad schema / existing output → exit 2; `run-all` isolates per-adapter failures |
 
 **What's missing for full production use:**
-- No published releases or changelog (37 commits, no tags)
+- No published releases or changelog (main-only, no tags)
 - No container image for hermetic execution
 - No performance regression tracking over time
 - Limited to 4 adapters; adding new tools requires manual adapter development

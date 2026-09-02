@@ -102,9 +102,27 @@ class TestRegressionDetection:
     def test_check_regressions_filters_correctly(self):
         """check_regressions should return only alerting metrics."""
         trends = [
-            MetricTrend(name="accuracy", trend=Trend.DEGRADING, values=[0.9, 0.7], percent_change=-0.22, regression_alert=True),
-            MetricTrend(name="precision", trend=Trend.STABLE, values=[0.9, 0.9], percent_change=0.0, regression_alert=False),
-            MetricTrend(name="latency", trend=Trend.DEGRADING, values=[50, 80], percent_change=0.60, regression_alert=True),
+            MetricTrend(
+                name="accuracy",
+                trend=Trend.DEGRADING,
+                values=[0.9, 0.7],
+                percent_change=-0.22,
+                regression_alert=True,
+            ),
+            MetricTrend(
+                name="precision",
+                trend=Trend.STABLE,
+                values=[0.9, 0.9],
+                percent_change=0.0,
+                regression_alert=False,
+            ),
+            MetricTrend(
+                name="latency",
+                trend=Trend.DEGRADING,
+                values=[50, 80],
+                percent_change=0.60,
+                regression_alert=True,
+            ),
         ]
         regressions = check_regressions(trends)
         assert len(regressions) == 2
@@ -190,7 +208,9 @@ class TestReportGeneration:
     def test_report_has_header(self):
         """Report should start with the expected markdown header."""
         trends = [
-            MetricTrend(name="accuracy", trend=Trend.IMPROVING, values=[0.8, 0.9], percent_change=0.125),
+            MetricTrend(
+                name="accuracy", trend=Trend.IMPROVING, values=[0.8, 0.9], percent_change=0.125
+            ),
         ]
         report = generate_trend_report(trends)
         assert report.startswith("# Benchmark Trend Report")
@@ -198,7 +218,9 @@ class TestReportGeneration:
     def test_report_contains_summary(self):
         """Report should contain a summary section with counts."""
         trends = [
-            MetricTrend(name="accuracy", trend=Trend.IMPROVING, values=[0.8, 0.9], percent_change=0.125),
+            MetricTrend(
+                name="accuracy", trend=Trend.IMPROVING, values=[0.8, 0.9], percent_change=0.125
+            ),
             MetricTrend(name="latency", trend=Trend.STABLE, values=[50, 50], percent_change=0.0),
         ]
         report = generate_trend_report(trends)
@@ -210,7 +232,13 @@ class TestReportGeneration:
     def test_report_contains_regression_section_when_alerts(self):
         """Report should include regression alert section when regressions exist."""
         trends = [
-            MetricTrend(name="accuracy", trend=Trend.DEGRADING, values=[0.9, 0.7], percent_change=-0.22, regression_alert=True),
+            MetricTrend(
+                name="accuracy",
+                trend=Trend.DEGRADING,
+                values=[0.9, 0.7],
+                percent_change=-0.22,
+                regression_alert=True,
+            ),
         ]
         report = generate_trend_report(trends)
         assert "## ⚠️ Regression Alerts" in report
@@ -219,7 +247,9 @@ class TestReportGeneration:
     def test_report_no_regression_section_when_clean(self):
         """Report should NOT include regression section when all metrics are fine."""
         trends = [
-            MetricTrend(name="accuracy", trend=Trend.IMPROVING, values=[0.8, 0.9], percent_change=0.125),
+            MetricTrend(
+                name="accuracy", trend=Trend.IMPROVING, values=[0.8, 0.9], percent_change=0.125
+            ),
         ]
         report = generate_trend_report(trends)
         assert "Regression Alerts" not in report
@@ -232,7 +262,9 @@ class TestReportGeneration:
     def test_report_contains_detailed_table(self):
         """Report should contain a detailed trends table with columns."""
         trends = [
-            MetricTrend(name="accuracy", trend=Trend.IMPROVING, values=[0.8, 0.9], percent_change=0.125),
+            MetricTrend(
+                name="accuracy", trend=Trend.IMPROVING, values=[0.8, 0.9], percent_change=0.125
+            ),
         ]
         report = generate_trend_report(trends)
         assert "## Detailed Trends" in report

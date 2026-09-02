@@ -114,3 +114,33 @@ def test_signature_detects_tampering(tmp_path, monkeypatch):
     result["input_identity"]["model_hash"] = "sha256:tampered"
 
     assert not cli.verify_signature(result, os.environ["MLSEC_BENCH_SIGNING_KEY"])
+
+
+def test_missing_sibling_tool_returns_exit_3(tmp_path, monkeypatch, capsys):
+    """An uninstalled sibling tool (ImportError) yields a clean exit 3, no traceback."""
+    import mlsec_benchmark_suite.adapters.hf_scanner_adapter as hf
+
+    def _raise(*args, **kwargs):
+        raise ImportError("hf-model-provenance-scanner is not installed.")
+
+    monkeypatch.setattr(hf, "run_benchmark", _raise)
+    out = tmp_path / "hf.json"
+    exit_code = cli.main(["run-hf-scanner", "--output", out.as_posix()])
+    assert exit_code == 3
+    err = capsys.readouterr().err
+    assert "dependency unavailable" in err
+    assert not out.exists()
+
+
+def test_missing_sibling_runtimeerror_returns_exit_3(tmp_path, monkeypatch, capsys):
+    """A RuntimeError from an adapter (e.g. iam-lint sibling absent) yields exit 3."""
+    import mlsec_benchmark_suite.adapters.iam_lint_adapter as iam
+
+    def _raise(*args, **kwargs):
+        raise RuntimeError("aws-agent-identity-guard is required for run-iam-lint.")
+
+    monkeypatch.setattr(iam, "run_benchmark", _raise)
+    out = tmp_path / "iam.json"
+    exit_code = cli.main(["run-iam-lint", "--output", out.as_posix()])
+    assert exit_code == 3
+    assert "dependency unavailable" in capsys.readouterr().err
