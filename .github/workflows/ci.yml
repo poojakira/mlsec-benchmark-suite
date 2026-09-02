@@ -185,4 +185,6 @@ jobs:
         run: bandit -r mlsec_benchmark_suite/ -c pyproject.toml
 
       - name: Check dependency vulnerabilities
-        run: pip-audit
+        run: |
+          python -m pip install --upgrade pip pip-audit
+          pip-audit --skip-editable
