@@ -41,7 +41,7 @@ jobs:
 
       - name: Upload coverage report
         if: matrix.python-version == '3.12'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: coverage-report
           path: coverage.xml
@@ -115,7 +115,7 @@ jobs:
           python -m mlsec_benchmark_suite.tracker results/ reports/trend_report.md
 
       - name: Upload trend report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: trend-report
           path: reports/trend_report.md
@@ -164,7 +164,7 @@ jobs:
             || echo 'HF scanner benchmark failed'
 
       - name: Upload benchmark results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: adapter-benchmark-results
           path: results/*.json
@@ -230,7 +230,7 @@ jobs:
           rm -f ci_signing_key.pem ci_signing_key.pub.pem
 
       - name: Upload real adapter result
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: real-adapter-result
           path: results/real_hf_scanner.json
