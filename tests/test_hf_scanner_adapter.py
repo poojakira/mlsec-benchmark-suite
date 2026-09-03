@@ -3,12 +3,31 @@
 from pathlib import Path
 from unittest.mock import patch
 
+import pytest
+
 FIXTURES_DIR = Path(__file__).resolve().parent.parent / "fixtures" / "hf_configs"
+
+# Detect whether the REAL sibling detector is importable. The real-adapter
+# integration test below runs the genuine scanner (no mock) when available and
+# is skipped otherwise, so `pytest tests/` stays green with no siblings installed.
+try:
+    from scanner.analyzer.config_scanner import (  # noqa: F401
+        analyze_config_file as _real_analyze,
+    )
+
+    _REAL_SCANNER_AVAILABLE = True
+except ImportError:
+    _REAL_SCANNER_AVAILABLE = False
 
 
 def _mock_analyze_config_file(path: str, source: str):
-    """Mock that returns findings for known-bad configs, empty for known-good."""
-    assert source.endswith(".json")
+    """Mock that returns findings for known-bad configs, empty for known-good.
+
+    Mirrors the real ``analyze_config_file(file_path, source)`` contract: the
+    adapter passes the fixture's raw *contents* as ``source`` (not the filename),
+    so this mock keys off the file path.
+    """
+    assert isinstance(source, str) and source  # real adapter passes file contents
     path_str = str(path)
     if "bad_pickle_exec" in path_str:
         return [{"rule": "HF001", "severity": "critical", "message": "Pickle execution detected"}]
@@ -109,3 +128,45 @@ def test_bad_configs_produce_findings():
     for fixture in bad_fixtures:
         assert fixture["metrics"]["tp"] == 1
         assert fixture["detected_findings"] > 0
+
+
+# ---------------------------------------------------------------------------
+# REAL adapter integration test (no mock). Runs the genuine
+# hf-model-provenance-scanner detector against committed fixtures. Skipped
+# automatically when the sibling package is not importable.
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.skipif(
+    not _REAL_SCANNER_AVAILABLE,
+    reason="hf-model-provenance-scanner (scanner.analyzer.config_scanner) not installed",
+)
+def test_real_scanner_detects_all_bad_and_no_false_positives():
+    """Invoke the REAL detector end-to-end and assert measured metrics.
+
+    This is not a mock: it imports and calls the real
+    ``scanner.analyzer.config_scanner.analyze_config_file`` against the
+    committed known-good/known-bad fixtures.
+    """
+    from mlsec_benchmark_suite.adapters.hf_scanner_adapter import run_benchmark
+
+    result = run_benchmark(fixtures_dir=FIXTURES_DIR)
+    metrics = result["results"]["hf_scanner"]["aggregate_metrics"]
+
+    # Measured from the real detector on 2026-09: all 3 bad fixtures flagged
+    # (recall=1.0), no false positives on the 2 clean fixtures (precision=1.0).
+    assert metrics["recall"] == 1.0
+    assert metrics["precision"] == 1.0
+    assert metrics["total_fp"] == 0
+    assert metrics["total_fn"] == 0
+    assert metrics["total_tp"] == 3
+
+    # Findings must be JSON-serializable dicts (real Finding dataclasses get
+    # converted), each carrying a real rule id from the scanner.
+    per_fixture = result["results"]["hf_scanner"]["per_fixture"]
+    for fixture in per_fixture:
+        if fixture["label"] == "known-bad":
+            assert fixture["findings_detail"], fixture["fixture"]
+            for finding in fixture["findings_detail"]:
+                assert isinstance(finding, dict)
+                assert finding["rule"], finding

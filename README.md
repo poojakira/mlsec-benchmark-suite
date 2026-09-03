@@ -24,6 +24,43 @@ Adding a new tool means writing one adapter file and dropping fixtures into the 
 
 ---
 
+## REAL adapters vs. the smoke-test scaffold
+
+This repo contains two clearly separated kinds of benchmark output. Do not confuse them.
+
+- **`run-smoke` is a deterministic smoke-test scaffold.** It uses a seeded PRNG
+  (`random.Random(seed)`) to exercise the result schema, provenance fields, and
+  signing workflow. Its per-category numbers are **synthetic** and are labeled as
+  such — they are not measurements of any detector. It exists to test the
+  *plumbing* (schema, contracts, evidence signing), not tool accuracy.
+
+- **`run-hf-scanner` is a REAL product adapter.** It imports the genuine
+  `scanner.analyzer.config_scanner.analyze_config_file` from
+  [`hf-model-provenance-scanner`](https://github.com/poojakira/hf-model-provenance-scanner),
+  feeds it the raw contents of the committed fixtures in `fixtures/hf_configs/`,
+  and reports the detector's actual findings — no PRNG, no hand-written numbers.
+
+**Verified real run** (Python 3.12, `hf-scanner` editable install, 5 committed
+fixtures — 3 known-bad, 2 known-good):
+
+```text
+$ mlsec-benchmark run-hf-scanner --output results/real_hf_scanner.json
+HF scanner benchmark complete: precision=1.0, recall=1.0, f1=1.0
+```
+
+All 3 known-bad configs are flagged by the scanner's real `HFS-024` rule (URL in a
+non-standard config field) and both known-good configs produce zero findings
+(`total_tp=3, total_fp=0, total_fn=0`). This is asserted end-to-end (no mock) by
+`tests/test_hf_scanner_adapter.py::test_real_scanner_detects_all_bad_and_no_false_positives`,
+which is skipped automatically when the sibling scanner is not installed and is
+run as a gating CI job (`real-adapter`) that installs the real sibling from git.
+
+The other adapters (`run-iam-lint`, `run-prompt-injection`, `run-spectral`) are
+real in-process adapters too, but their sibling tools are optional; their unit
+tests use mocks so `pytest tests/` stays green with no siblings installed.
+
+---
+
 ## Architecture Overview
 
 ```

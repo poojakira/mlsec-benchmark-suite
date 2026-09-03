@@ -92,12 +92,23 @@ mlsec-benchmark run-prompt-injection  --output results/prompt_injection.json
 mlsec-benchmark run-spectral          --output results/spectral.json
 ```
 
-Verified in this environment (only `aws-agent-identity-guard` installed):
+Verified in this environment (`aws-agent-identity-guard` and the real
+`hf-scanner` sibling both installed):
 
 ```text
 $ mlsec-benchmark run-iam-lint --output results/iam_lint.json
 IAM lint benchmark complete: precision=1.0, recall=1.0, f1=1.0     # exit 0
 
+$ mlsec-benchmark run-hf-scanner --output results/hf_scanner.json
+HF scanner benchmark complete: precision=1.0, recall=1.0, f1=1.0   # exit 0 (REAL detector run)
+```
+
+The `run-hf-scanner` numbers above are a **REAL** run of the genuine
+`scanner.analyzer.config_scanner.analyze_config_file` against the 5 committed
+`fixtures/hf_configs/` files (3 known-bad, 2 known-good). When the sibling
+scanner is **not** installed, `run-hf-scanner` exits with code 3:
+
+```text
 $ mlsec-benchmark run-hf-scanner --output results/hf_scanner.json
 error: dependency unavailable: hf-model-provenance-scanner is not installed. Install with: pip install hf-model-provenance-scanner   # exit 3
 ```
@@ -133,14 +144,19 @@ The `combined.json` it writes is aggregate-only — do **not** pass it to
 
 ```bash
 pytest tests/ -q
-# 56 passed
+# 57 passed              (with hf-scanner installed)
+# 56 passed, 1 skipped   (without it — the real-detector test is skipped)
 ```
 
-56 test functions across 7 modules: 4 adapter modules, `test_cli.py` (CLI dispatch,
+57 test functions across 7 modules: 4 adapter modules, `test_cli.py` (CLI dispatch,
 clean-error exit codes 2 & 3, signing/tamper detection), `test_run_all.py`
 (aggregate + partial-failure handling), and `test_tracker.py` (trend/regression
-analysis). Sibling modules are mocked, so the suite is green with no sibling tools
-installed.
+analysis). Sibling modules are mocked for the unit tests, so the suite is green
+with no sibling tools installed. One test
+(`test_hf_scanner_adapter.py::test_real_scanner_detects_all_bad_and_no_false_positives`)
+runs the **real** hf-scanner detector end-to-end (no mock) and is skipped
+automatically unless `hf-scanner` is installed; when installed it passes
+(all counted in the 57).
 
 ```bash
 pytest tests/test_cli.py -v            # single module

@@ -104,6 +104,12 @@ jobs:
             --dependency-lock-hash "${LOCK_HASH}" \
             --overwrite
 
+      - name: Validate smoke result against schema (fail on schema errors)
+        run: |
+          # Hard schema-validation gate: any missing/invalid field makes the
+          # smoke benchmark fail CI (exit 2), per issue #1.
+          python -m mlsec_benchmark_suite validate results/smoke-result.json
+
       - name: Run trend analysis
         run: |
           python -m mlsec_benchmark_suite.tracker results/ reports/trend_report.md
@@ -140,8 +146,8 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
-          pip install aws-agent-identity-guard || echo 'aws-agent-identity-guard not available, skipping'
-          pip install hf-model-provenance-scanner || echo 'hf-model-provenance-scanner not available, skipping'
+          pip install "aws-agent-identity-guard @ git+https://github.com/poojakira/aws-agent-identity-guard.git" || echo 'aws-agent-identity-guard not available, skipping'
+          pip install "hf-scanner @ git+https://github.com/poojakira/hf-model-provenance-scanner.git" || echo 'hf-model-provenance-scanner not available, skipping'
 
       - name: Run IAM lint benchmark (fixture-only, no network)
         run: |
@@ -163,6 +169,53 @@ jobs:
           name: adapter-benchmark-results
           path: results/*.json
           if-no-files-found: ignore
+
+  real-adapter:
+    # Gating job: installs the REAL hf-model-provenance-scanner sibling and runs
+    # the genuine detector against committed fixtures via the pytest integration
+    # test (which is skipped when the sibling is absent, but here it is present).
+    # This proves at least one REAL product adapter works end-to-end in CI.
+    name: Real HF-Scanner Adapter
+    runs-on: ubuntu-latest
+    needs: [test]
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install suite + real sibling scanner
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+          pip install "hf-scanner @ git+https://github.com/poojakira/hf-model-provenance-scanner.git"
+
+      - name: Run REAL adapter integration test (no mock)
+        run: |
+          python -c "from scanner.analyzer.config_scanner import analyze_config_file; print('real scanner importable')"
+          pytest tests/test_hf_scanner_adapter.py::test_real_scanner_detects_all_bad_and_no_false_positives -v
+
+      - name: Produce and inspect REAL adapter result
+        run: |
+          python -m mlsec_benchmark_suite run-hf-scanner \
+            --output results/real_hf_scanner.json --overwrite
+          python - <<'PY'
+          import json
+          m = json.load(open("results/real_hf_scanner.json"))["results"]["hf_scanner"]["aggregate_metrics"]
+          assert m["precision"] == 1.0 and m["recall"] == 1.0, m
+          print("REAL adapter metrics:", m)
+          PY
+
+      - name: Upload real adapter result
+        uses: actions/upload-artifact@v4
+        with:
+          name: real-adapter-result
+          path: results/real_hf_scanner.json
+          if-no-files-found: error
 
   security:
     name: Security Scan

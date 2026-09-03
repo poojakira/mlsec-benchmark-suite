@@ -20,7 +20,8 @@ try:
 except ImportError:
     analyze_config_file = None  # type: ignore[assignment]
 
-FIXTURES_DIR = Path(__file__).resolve().parent.parent.parent.parent / "fixtures" / "hf_configs"
+# adapters/ -> mlsec_benchmark_suite/ -> repo root -> fixtures/hf_configs
+FIXTURES_DIR = Path(__file__).resolve().parent.parent.parent / "fixtures" / "hf_configs"
 
 # Ground truth: each fixture maps to expected finding count.
 # 0 means the config is clean (known-good), >0 means known-bad with that many issues.
@@ -37,12 +38,40 @@ def _sha256_file(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def _finding_to_dict(finding: Any) -> dict[str, Any]:
+    """Serialize a scanner Finding (dataclass or dict) to a JSON-safe dict.
+
+    The real ``scanner.models.Finding`` is a dataclass whose ``severity`` is a
+    ``Severity`` enum. Mocked findings in the unit tests are already dicts.
+    """
+    if isinstance(finding, dict):
+        return finding
+    severity = getattr(finding, "severity", None)
+    severity_value = getattr(severity, "value", severity)
+    return {
+        "rule": getattr(finding, "rule_id", None),
+        "severity": severity_value,
+        "message": getattr(finding, "message", None),
+        "evidence": getattr(finding, "evidence", None),
+        "line": getattr(finding, "line_number", None),
+        "cwe": getattr(finding, "cwe", None),
+    }
+
+
 def _evaluate_fixture(
     fixture_name: str, fixture_path: Path, expected: dict[str, Any]
 ) -> dict[str, Any]:
-    """Run scanner and compute TP/FP/FN against ground truth."""
-    findings = analyze_config_file(str(fixture_path), source=fixture_name)
-    detected_count = len(findings) if findings else 0
+    """Run the REAL scanner against a fixture and compute TP/FP/FN.
+
+    The scanner's ``analyze_config_file(file_path, source)`` expects ``source``
+    to be the *raw file contents* (it parses the text as JSON and pattern-matches
+    against it), not the file name. We read the fixture bytes and pass the decoded
+    text so the detector runs on real data.
+    """
+    source_text = fixture_path.read_text(encoding="utf-8")
+    findings = analyze_config_file(str(fixture_path), source=source_text)
+    findings = list(findings) if findings else []
+    detected_count = len(findings)
     is_bad = expected["expected_findings"] > 0
 
     # Classification logic
@@ -73,7 +102,7 @@ def _evaluate_fixture(
             "fp": fp,
             "fn": fn,
         },
-        "findings_detail": findings if findings else [],
+        "findings_detail": [_finding_to_dict(f) for f in findings],
     }
 
 
