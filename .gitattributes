@@ -1,0 +1,4 @@
+# Normalize line endings for checksum-verified fixtures and manifests so that
+# committed SHA-256 digests are deterministic across Windows/Linux/macOS.
+fixtures/hf_configs/*.json text eol=lf
+datasets/hf-scanner-fixtures.json text eol=lf

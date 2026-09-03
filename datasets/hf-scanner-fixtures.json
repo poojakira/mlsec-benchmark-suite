@@ -4,14 +4,15 @@
   "source": "Hand-authored HuggingFace model config fixtures (3 known-bad, 2 known-good) committed under fixtures/hf_configs/",
   "license": "Apache-2.0",
   "version": "0.1.0",
-  "dataset_hash": "sha256:7e7a5b07fd8296d979d0c805d67f55682c5d053829e85afa818b9ba6500769f6",
+  "dataset_hash": "sha256:3e17e43790433220b6cbfc8ef322a556a5e0919e06cbc27fa9c5344863b48d8e",
   "acquisition": "Committed test configs for hf-model-provenance-scanner; no third-party downloads.",
   "split_policy": "All fixtures used for evaluation; no train/test split needed for a rule-based scanner.",
+  "line_endings": "LF (enforced via .gitattributes) so checksums are deterministic across platforms.",
   "files": {
-    "bad_pickle_exec.json": "sha256:3d7fce39b5d85400ef47a33e784f26ad61f13f5036274fadd951a760e148d55e",
-    "bad_suspicious_url.json": "sha256:eaa5ffa6f80be95611f86b97d93ab28ea41850a7b1bffd1981e1bed38895f898",
-    "bad_unsigned_weights.json": "sha256:a7b01e9d4e49d971b17c7faa4a9cd01b2762246e053f2015b3e7ea0458bfe826",
-    "clean_bert_config.json": "sha256:0ef3259cd70446449c611f7eaf08cf666e3f26f7f81b842aeb925b01a70074e0",
-    "clean_gpt2_config.json": "sha256:ec4a22c4c8cf72b9f7842453cb9cc1f55be141c0a50adffa330ccda1b606034a"
+    "bad_pickle_exec.json": "sha256:f60bb6a0fb78416a0efa6f8278b6da3617b212f9395d07a0c9a0fd0f852dd95c",
+    "bad_suspicious_url.json": "sha256:43394cd6f0ef07b4525b03b0a60a2708a78fbc9b13192d9cc612b1acbd7f06ca",
+    "bad_unsigned_weights.json": "sha256:e1ba1cc4cbbe2a06731db1494c2e2a6c06a16e9b3c31921364a869f75a0694e2",
+    "clean_bert_config.json": "sha256:88362c2b1e8c29848e3489ba0d65962dc5326cc7ed995d613eef21d5c8bbb859",
+    "clean_gpt2_config.json": "sha256:f5ab6932e8dc27f83d8dcd4bdef0bf5ee4301754ef4c13e270fdde23ffee9c73"
   }
 }
