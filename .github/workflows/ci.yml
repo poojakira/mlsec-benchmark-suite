@@ -210,6 +210,25 @@ jobs:
           print("REAL adapter metrics:", m)
           PY
 
+      - name: Verify committed dataset checksums (integrity gate)
+        run: |
+          python -m mlsec_benchmark_suite verify-dataset \
+            --manifest datasets/hf-scanner-fixtures.json \
+            --fixtures-dir fixtures/hf_configs
+
+      - name: Ed25519 public-key sign + verify the REAL result
+        run: |
+          # Generate an ephemeral CI keypair, sign the real result, then verify
+          # with the PUBLIC key alone (proves third-party verifiability, issue #1).
+          python -m mlsec_benchmark_suite keygen-ed25519 \
+            --private-out ci_signing_key.pem --public-out ci_signing_key.pub.pem
+          python -m mlsec_benchmark_suite sign results/real_hf_scanner.json \
+            --private-key ci_signing_key.pem \
+            --output results/real_hf_scanner.signed.json
+          python -m mlsec_benchmark_suite verify results/real_hf_scanner.signed.json \
+            --public-key ci_signing_key.pub.pem
+          rm -f ci_signing_key.pem ci_signing_key.pub.pem
+
       - name: Upload real adapter result
         uses: actions/upload-artifact@v4
         with:

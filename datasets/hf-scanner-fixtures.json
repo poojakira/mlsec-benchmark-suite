@@ -1,0 +1,17 @@
+{
+  "schema_version": "1.0.0",
+  "name": "hf-scanner-fixtures",
+  "source": "Hand-authored HuggingFace model config fixtures (3 known-bad, 2 known-good) committed under fixtures/hf_configs/",
+  "license": "Apache-2.0",
+  "version": "0.1.0",
+  "dataset_hash": "sha256:7e7a5b07fd8296d979d0c805d67f55682c5d053829e85afa818b9ba6500769f6",
+  "acquisition": "Committed test configs for hf-model-provenance-scanner; no third-party downloads.",
+  "split_policy": "All fixtures used for evaluation; no train/test split needed for a rule-based scanner.",
+  "files": {
+    "bad_pickle_exec.json": "sha256:3d7fce39b5d85400ef47a33e784f26ad61f13f5036274fadd951a760e148d55e",
+    "bad_suspicious_url.json": "sha256:eaa5ffa6f80be95611f86b97d93ab28ea41850a7b1bffd1981e1bed38895f898",
+    "bad_unsigned_weights.json": "sha256:a7b01e9d4e49d971b17c7faa4a9cd01b2762246e053f2015b3e7ea0458bfe826",
+    "clean_bert_config.json": "sha256:0ef3259cd70446449c611f7eaf08cf666e3f26f7f81b842aeb925b01a70074e0",
+    "clean_gpt2_config.json": "sha256:ec4a22c4c8cf72b9f7842453cb9cc1f55be141c0a50adffa330ccda1b606034a"
+  }
+}

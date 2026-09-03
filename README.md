@@ -59,6 +59,22 @@ The other adapters (`run-iam-lint`, `run-prompt-injection`, `run-spectral`) are
 real in-process adapters too, but their sibling tools are optional; their unit
 tests use mocks so `pytest tests/` stays green with no siblings installed.
 
+### Evidence integrity: verifiable signatures + dataset checksums
+
+- **Ed25519 public-key signing** — `mlsec-benchmark keygen-ed25519`, `sign`, and
+  `verify` produce and check signatures that a third party can verify with the
+  **public key alone** (no shared secret). This addresses the prior HMAC
+  limitation where results could only be verified by whoever held the secret.
+  Verified locally: `signature OK (ed25519)`. Tampering with any signed field or
+  using the wrong public key makes `verify` fail (exit 2). Signing keys (`*.pem`)
+  are git-ignored. `cryptography` is a dev-only, lazily imported dependency, so
+  the core `run-smoke`/`validate` runtime keeps zero required third-party deps.
+- **Dataset checksums** — `datasets/hf-scanner-fixtures.json` pins the SHA-256 of
+  every committed HF fixture. `mlsec-benchmark verify-dataset` recomputes and
+  compares them, and `run-hf-scanner` runs the same gate automatically before
+  scoring, so a modified fixture aborts the run instead of scoring against
+  unexpected data. Verified locally: `dataset checksums OK`.
+
 ---
 
 ## Architecture Overview
@@ -102,7 +118,7 @@ Component responsibilities:
 | `reports/` | Generated Markdown reports for human review (via the `report` subcommand). |
 | `dashboard/` | Static HTML page served via GitHub Pages for at-a-glance status. |
 | `datasets/` | Fixture set manifests describing which inputs belong to which test suites. |
-| `tests/` | 56 test functions across 7 test modules covering all adapters, CLI, and integration. |
+| `tests/` | 67 test functions across 8 test modules covering all adapters, CLI, integration, Ed25519 signing, and dataset checksum verification. |
 
 ---
 
@@ -300,8 +316,9 @@ See [RUNBOOK.md](RUNBOOK.md) for the full operational reference for every subcom
 | `spectral_adapter` | Poisoned dataset samples | Dedicated module |
 | Cross-adapter integration | All fixture types | `test_run_all.py` |
 | CLI interface | Subcommand invocations | `test_cli.py` |
+| Ed25519 signing + dataset integrity | Keygen/sign/verify, tamper detection, checksum verification | `test_signing_and_dataset.py` |
 
-Total: 56 test functions across 7 test modules.
+Total: 67 test functions across 8 test modules.
 
 **Limitations:**
 - The suite tests tools against static, curated fixtures. It does not measure real-world detection rates or false positive rates on production data.
@@ -316,7 +333,7 @@ Total: 56 test functions across 7 test modules.
 | Criterion | Status | Notes |
 |-----------|--------|-------|
 | Automated CI | Yes | GitHub Actions workflow + Dependabot |
-| Test coverage | 56 test functions across 7 modules, all 4 adapters exercised | No coverage gaps in adapter layer |
+| Test coverage | 67 test functions across 8 modules, all 4 adapters exercised | No coverage gaps in adapter layer |
 | Schema validation | Enforced on every run | Catches output drift automatically |
 | Contract versioning | `portfolio-smoke-v1.json` | Versioned filename allows schema evolution |
 | Dependency hygiene | Zero runtime deps, pip-audit in CI | Minimal supply chain risk |

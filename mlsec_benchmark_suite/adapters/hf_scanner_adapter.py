@@ -22,6 +22,10 @@ except ImportError:
 
 # adapters/ -> mlsec_benchmark_suite/ -> repo root -> fixtures/hf_configs
 FIXTURES_DIR = Path(__file__).resolve().parent.parent.parent / "fixtures" / "hf_configs"
+# Committed dataset manifest with per-file sha256 checksums (integrity gate).
+DATASET_MANIFEST = (
+    Path(__file__).resolve().parent.parent.parent / "datasets" / "hf-scanner-fixtures.json"
+)
 
 # Ground truth: each fixture maps to expected finding count.
 # 0 means the config is clean (known-good), >0 means known-bad with that many issues.
@@ -117,6 +121,22 @@ def run_benchmark(fixtures_dir: Path | None = None) -> dict[str, Any]:
             "Install with: pip install hf-model-provenance-scanner"
         )
     fixtures_dir = fixtures_dir or FIXTURES_DIR
+    # Integrity gate: verify committed fixture checksums against the manifest so
+    # the benchmark provably ran against the exact committed data (issue #1).
+    manifest_files: dict[str, str] = {}
+    if DATASET_MANIFEST.exists():
+        manifest = json.loads(DATASET_MANIFEST.read_text(encoding="utf-8"))
+        manifest_files = manifest.get("files", {})
+        for rel_name, expected_digest in sorted(manifest_files.items()):
+            target = fixtures_dir / rel_name
+            if not target.exists():
+                raise FileNotFoundError(f"manifest lists missing fixture: {target}")
+            actual = "sha256:" + _sha256_file(target)
+            if actual != expected_digest:
+                raise ValueError(
+                    f"dataset checksum mismatch for {rel_name}: "
+                    f"expected {expected_digest}, got {actual}"
+                )
     fixture_results = []
     all_tp = 0
     all_fp = 0

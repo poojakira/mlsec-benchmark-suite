@@ -76,6 +76,40 @@ mlsec-benchmark report results/smoke.json --output reports/report.md
 mlsec-benchmark build-index --results-dir results --output results/index.json
 ```
 
+### Ed25519 public-key signing (third-party verifiable)
+
+Unlike the shared-secret HMAC path, an Ed25519 signature is verifiable by anyone
+holding only the **public** key — no shared secret. Verified in this environment
+(`cryptography` installed via `pip install -e ".[dev]"`):
+
+```bash
+mlsec-benchmark keygen-ed25519 --private-out key.pem --public-out key.pub.pem
+mlsec-benchmark sign results/real_hf_scanner.json \
+  --private-key key.pem --output results/real_hf_scanner.signed.json
+mlsec-benchmark verify results/real_hf_scanner.signed.json            # uses embedded public key
+mlsec-benchmark verify results/real_hf_scanner.signed.json --public-key key.pub.pem
+# signature OK (ed25519) for results/real_hf_scanner.signed.json      (exit 0)
+```
+
+Tampering with any signed field, or verifying with the wrong public key, makes
+`verify` exit 2 (`signature verification FAILED`). Signing keys (`*.pem`) are
+git-ignored — never commit private keys.
+
+### verify-dataset (checksum integrity gate)
+
+Recomputes each committed fixture's SHA-256 and compares it to the checksums in
+the dataset manifest, proving the benchmark ran against the exact committed data.
+
+```bash
+mlsec-benchmark verify-dataset \
+  --manifest datasets/hf-scanner-fixtures.json --fixtures-dir fixtures/hf_configs
+# dataset checksums OK: fixtures/hf_configs matches datasets/hf-scanner-fixtures.json  (exit 0)
+```
+
+The `run-hf-scanner` adapter runs this same integrity check automatically before
+scoring, so a modified fixture aborts the run (exit 2) instead of producing a
+result against unexpected data.
+
 > **Important:** `validate`, `report`, and `build-index` require the full
 > provenance schema written by `run-smoke` / `run-<adapter>`. `build-index`
 > validates *every* `*.json` in `--results-dir`; if that directory contains a
@@ -144,19 +178,21 @@ The `combined.json` it writes is aggregate-only — do **not** pass it to
 
 ```bash
 pytest tests/ -q
-# 57 passed              (with hf-scanner installed)
-# 56 passed, 1 skipped   (without it — the real-detector test is skipped)
+# 67 passed              (with hf-scanner installed)
+# 66 passed, 1 skipped   (without it — the real-detector test is skipped)
 ```
 
-57 test functions across 7 modules: 4 adapter modules, `test_cli.py` (CLI dispatch,
-clean-error exit codes 2 & 3, signing/tamper detection), `test_run_all.py`
-(aggregate + partial-failure handling), and `test_tracker.py` (trend/regression
-analysis). Sibling modules are mocked for the unit tests, so the suite is green
-with no sibling tools installed. One test
+67 test functions across 8 modules: 4 adapter modules, `test_cli.py` (CLI dispatch,
+clean-error exit codes 2 & 3, HMAC signing/tamper detection), `test_run_all.py`
+(aggregate + partial-failure handling), `test_tracker.py` (trend/regression
+analysis), and `test_signing_and_dataset.py` (Ed25519 keygen/sign/verify
+round-trip, tamper + wrong-key detection, dataset checksum verification, and the
+`--overwrite` warning). Sibling modules are mocked for the unit tests, so the
+suite is green with no sibling tools installed. One test
 (`test_hf_scanner_adapter.py::test_real_scanner_detects_all_bad_and_no_false_positives`)
 runs the **real** hf-scanner detector end-to-end (no mock) and is skipped
 automatically unless `hf-scanner` is installed; when installed it passes
-(all counted in the 57).
+(all counted in the 67).
 
 ```bash
 pytest tests/test_cli.py -v            # single module
@@ -169,7 +205,7 @@ pytest tests/ -v --durations=10        # with timing
 |-------|---------|
 | `results` | Per-category / per-adapter benchmark metrics |
 | `aggregate_metrics` | Precision, recall, F1 per adapter |
-| `signature` | HMAC-SHA256 integrity signature when `MLSEC_BENCH_SIGNING_KEY` is set; otherwise `unsigned` |
+| `signature` | Integrity signature: `unsigned` (SHA-256 digest only), `hmac-sha256` when `MLSEC_BENCH_SIGNING_KEY` is set, or `ed25519` (third-party verifiable public-key signature) after `mlsec-benchmark sign` |
 
 ## Troubleshooting
 

@@ -71,6 +71,14 @@ def load_json(path: Path) -> Any:
 def write_json(path: Path, data: Any, *, overwrite: bool = False) -> None:
     if path.exists() and not overwrite:
         raise FileExistsError(f"refusing to overwrite existing artifact: {path}")
+    if path.exists() and overwrite:
+        # Overwriting a signed/committed artifact destroys prior provenance.
+        # Emit a strong, visible warning (issue #1: gate --overwrite).
+        print(
+            f"WARNING: --overwrite is replacing existing evidence artifact: {path}. "
+            "Prior provenance/signature for this file is lost and cannot be recovered.",
+            file=sys.stderr,
+        )
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(data, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
@@ -99,6 +107,131 @@ def verify_signature(payload: dict[str, Any], key: str | None) -> bool:
         return not key and signature.get("value") == ""
     # hmac.compare_digest performs a timing-safe comparison to prevent timing attacks.
     return bool(key) and _hmac.compare_digest(signature.get("value", ""), expected["value"])
+
+
+# ---------------------------------------------------------------------------
+# Ed25519 public-key signing (third-party verifiable). Unlike the shared-secret
+# HMAC path, an Ed25519 signature can be verified by anyone holding only the
+# PUBLIC key, so results become independently auditable (issue #1).
+# ---------------------------------------------------------------------------
+
+
+def _load_ed25519_private_key(pem_path: Path) -> Any:
+    from cryptography.hazmat.primitives.serialization import load_pem_private_key
+
+    return load_pem_private_key(pem_path.read_bytes(), password=None)
+
+
+def _load_ed25519_public_key(pem_path: Path) -> Any:
+    from cryptography.hazmat.primitives.serialization import load_pem_public_key
+
+    return load_pem_public_key(pem_path.read_bytes())
+
+
+def sign_payload_ed25519(payload: dict[str, Any], private_key_pem: Path) -> dict[str, str]:
+    """Sign the canonical payload digest with an Ed25519 private key.
+
+    The signature value is the hex-encoded Ed25519 signature over the ASCII
+    SHA-256 hex digest of the unsigned payload. The corresponding public key is
+    embedded so a third party can verify with no shared secret.
+    """
+    from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
+
+    unsigned = {k: v for k, v in payload.items() if k != "signature"}
+    digest = hash_json(unsigned)
+    private_key = _load_ed25519_private_key(private_key_pem)
+    sig = private_key.sign(digest.encode("ascii"))
+    public_pem = (
+        private_key.public_key()
+        .public_bytes(Encoding.PEM, PublicFormat.SubjectPublicKeyInfo)
+        .decode("ascii")
+    )
+    return {
+        "algorithm": "ed25519",
+        "payload_sha256": digest,
+        "value": sig.hex(),
+        "public_key_pem": public_pem,
+    }
+
+
+def verify_signature_ed25519(payload: dict[str, Any], public_key_pem: Path | None = None) -> bool:
+    """Verify an Ed25519-signed result.
+
+    If ``public_key_pem`` is None the embedded ``public_key_pem`` in the
+    signature block is used. Returns True only if the digest matches the
+    recomputed payload digest AND the Ed25519 signature verifies.
+    """
+    from cryptography.exceptions import InvalidSignature
+    from cryptography.hazmat.primitives.serialization import load_pem_public_key
+
+    signature = payload.get("signature", {})
+    if signature.get("algorithm") != "ed25519":
+        return False
+    unsigned = {k: v for k, v in payload.items() if k != "signature"}
+    digest = hash_json(unsigned)
+    if signature.get("payload_sha256") != digest:
+        return False
+    if public_key_pem is not None:
+        public_key = _load_ed25519_public_key(public_key_pem)
+    else:
+        embedded = signature.get("public_key_pem")
+        if not embedded:
+            return False
+        public_key = load_pem_public_key(embedded.encode("ascii"))
+    try:
+        public_key.verify(bytes.fromhex(signature.get("value", "")), digest.encode("ascii"))
+    except (InvalidSignature, ValueError):
+        return False
+    return True
+
+
+def generate_ed25519_keypair(private_out: Path, public_out: Path, *, overwrite: bool = False) -> None:
+    """Generate an Ed25519 keypair and write PEM files (private + public)."""
+    from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+    from cryptography.hazmat.primitives.serialization import (
+        Encoding,
+        NoEncryption,
+        PrivateFormat,
+        PublicFormat,
+    )
+
+    for out in (private_out, public_out):
+        if out.exists() and not overwrite:
+            raise FileExistsError(f"refusing to overwrite existing key: {out}")
+    private_key = Ed25519PrivateKey.generate()
+    private_out.parent.mkdir(parents=True, exist_ok=True)
+    private_out.write_bytes(
+        private_key.private_bytes(Encoding.PEM, PrivateFormat.PKCS8, NoEncryption())
+    )
+    public_out.parent.mkdir(parents=True, exist_ok=True)
+    public_out.write_bytes(
+        private_key.public_key().public_bytes(Encoding.PEM, PublicFormat.SubjectPublicKeyInfo)
+    )
+
+
+def verify_dataset_checksums(manifest: dict[str, Any], fixtures_dir: Path) -> None:
+    """Recompute committed fixture checksums and compare to the manifest.
+
+    ``manifest['files']`` (when present) maps each fixture's relative path to its
+    committed ``sha256:...`` digest. This proves the benchmark ran against the
+    exact committed data. Raises ValueError on any mismatch or missing file.
+    """
+    files = manifest.get("files")
+    if not files:
+        raise ValueError(
+            "dataset manifest has no 'files' checksum map; cannot verify integrity"
+        )
+    mismatches = []
+    for rel_path, expected_digest in sorted(files.items()):
+        target = fixtures_dir / rel_path
+        if not target.exists():
+            mismatches.append(f"{rel_path}: file missing")
+            continue
+        actual = "sha256:" + sha256_bytes(target.read_bytes())
+        if actual != expected_digest:
+            mismatches.append(f"{rel_path}: expected {expected_digest}, got {actual}")
+    if mismatches:
+        raise ValueError("dataset checksum verification failed: " + "; ".join(mismatches))
 
 
 def environment() -> dict[str, str]:
@@ -269,9 +402,14 @@ def validate_result(result: dict[str, Any], *, require_signature: bool = False) 
     signature = result["signature"]
     if require_signature and signature.get("algorithm") == "unsigned":
         raise ValueError("signed result required")
-    key = os.environ.get("MLSEC_BENCH_SIGNING_KEY")
-    if signature.get("algorithm") != "unsigned" and not verify_signature(result, key):
-        raise ValueError("result signature verification failed")
+    algorithm = signature.get("algorithm")
+    if algorithm == "ed25519":
+        if not verify_signature_ed25519(result, None):
+            raise ValueError("result signature verification failed")
+    elif algorithm != "unsigned":
+        key = os.environ.get("MLSEC_BENCH_SIGNING_KEY")
+        if not verify_signature(result, key):
+            raise ValueError("result signature verification failed")
 
 
 def render_report(result: dict[str, Any]) -> str:
@@ -408,6 +546,38 @@ def _dispatch(argv: list[str] | None = None) -> int:
     index.add_argument("--output", type=Path, required=True)
     index.add_argument("--overwrite", action="store_true")
 
+    keygen = sub.add_parser(
+        "keygen-ed25519", help="Generate an Ed25519 keypair for public-key result signing"
+    )
+    keygen.add_argument("--private-out", type=Path, required=True)
+    keygen.add_argument("--public-out", type=Path, required=True)
+    keygen.add_argument("--overwrite", action="store_true")
+
+    sign = sub.add_parser(
+        "sign", help="Re-sign an existing result with an Ed25519 private key (third-party verifiable)"
+    )
+    sign.add_argument("result", type=Path)
+    sign.add_argument("--private-key", type=Path, required=True)
+    sign.add_argument("--output", type=Path, required=True)
+    sign.add_argument("--overwrite", action="store_true")
+
+    verify = sub.add_parser(
+        "verify", help="Verify a result's signature (Ed25519 public-key or HMAC)"
+    )
+    verify.add_argument("result", type=Path)
+    verify.add_argument(
+        "--public-key",
+        type=Path,
+        help="Ed25519 public key PEM. If omitted, uses the public key embedded in the result.",
+    )
+
+    verify_ds = sub.add_parser(
+        "verify-dataset",
+        help="Recompute committed fixture checksums and compare to the dataset manifest",
+    )
+    verify_ds.add_argument("--manifest", type=Path, required=True)
+    verify_ds.add_argument("--fixtures-dir", type=Path, required=True)
+
     args = parser.parse_args(argv)
     if args.command == "run-smoke":
         result = build_smoke_result(args)
@@ -428,6 +598,36 @@ def _dispatch(argv: list[str] | None = None) -> int:
         return 0
     if args.command == "build-index":
         write_json(args.output, build_index(args.results_dir), overwrite=args.overwrite)
+        return 0
+    if args.command == "keygen-ed25519":
+        generate_ed25519_keypair(args.private_out, args.public_out, overwrite=args.overwrite)
+        print(f"wrote private key {args.private_out} and public key {args.public_out}")
+        return 0
+    if args.command == "sign":
+        result = load_json(args.result)
+        result["signature"] = sign_payload_ed25519(result, args.private_key)
+        write_json(args.output, result, overwrite=args.overwrite)
+        print(f"signed {args.result} with Ed25519 -> {args.output}")
+        return 0
+    if args.command == "verify":
+        result = load_json(args.result)
+        algorithm = result.get("signature", {}).get("algorithm")
+        if algorithm == "ed25519":
+            ok = verify_signature_ed25519(result, args.public_key)
+        elif algorithm == "unsigned":
+            print("error: result is unsigned; nothing to verify", file=sys.stderr)
+            return 2
+        else:
+            ok = verify_signature(result, os.environ.get("MLSEC_BENCH_SIGNING_KEY"))
+        if not ok:
+            print("error: signature verification FAILED", file=sys.stderr)
+            return 2
+        print(f"signature OK ({algorithm}) for {args.result}")
+        return 0
+    if args.command == "verify-dataset":
+        manifest = load_json(args.manifest)
+        verify_dataset_checksums(manifest, args.fixtures_dir)
+        print(f"dataset checksums OK: {args.fixtures_dir} matches {args.manifest}")
         return 0
     if args.command == "run-iam-lint":
         from mlsec_benchmark_suite.adapters.iam_lint_adapter import run_benchmark
