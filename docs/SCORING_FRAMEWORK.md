@@ -1,7 +1,8 @@
 # Scoring Framework
 
-This document defines how ML security tools are scored across dimensions, how
-composite scores are calculated, and what thresholds gate CI pass/fail decisions.
+This document defines how ML security tools are scored across benchmark dimensions, how composite scores are calculated, and what thresholds gate benchmark CI decisions.
+
+**Important scope rule:** benchmark scores measure the configured benchmark. They are not production-readiness ratings, security guarantees, or deployment approvals. Production readiness requires separate evidence for architecture, authentication/authorization, reliability, operations, dependency security, threat-model coverage, and deployment conditions.
 
 ---
 
@@ -31,8 +32,6 @@ Each tool is evaluated across four orthogonal dimensions:
 | AUC-ROC             | Area under ROC curve (if scores available) | ≥ 0.92   |
 
 ### 2.2 Accuracy Score Calculation
-
-The accuracy dimension score is computed as a weighted combination:
 
 ```
 accuracy_score = (
@@ -167,8 +166,6 @@ The following usability aspects are verified automatically:
 
 ### 6.1 Formula
 
-The composite score combines all dimensions:
-
 ```
 composite = (
     0.40 × accuracy_score +
@@ -180,28 +177,29 @@ composite = (
 
 ### 6.2 Score Scale
 
-All scores (per-dimension and composite) are on a 0.0–1.0 scale:
+All scores (per-dimension and composite) are on a 0.0–1.0 benchmark scale:
 
-| Score Range | Rating      | Interpretation                            |
-|-------------|-------------|-------------------------------------------|
-| 0.90–1.00   | Excellent   | Production-ready, best-in-class           |
-| 0.75–0.89   | Good        | Production-ready with minor gaps          |
-| 0.60–0.74   | Acceptable  | Usable with known limitations             |
-| 0.40–0.59   | Below par   | Significant improvements needed           |
-| 0.00–0.39   | Failing     | Not suitable for production use           |
+| Score Range | Benchmark Interpretation | Deployment implication |
+|-------------|--------------------------|-------------------------|
+| 0.90–1.00   | High benchmark score     | Requires independent deployment/security review |
+| 0.75–0.89   | Strong benchmark score   | Requires independent deployment/security review |
+| 0.60–0.74   | Mid-range benchmark score| Requires independent deployment/security review |
+| 0.40–0.59   | Low benchmark score      | Indicates benchmark gaps, not a production verdict |
+| 0.00–0.39   | Very low benchmark score | Indicates benchmark gaps, not a production verdict |
+
+**No score range is labeled “production-ready,” “best-in-class,” or otherwise used as a deployment approval.**
 
 ### 6.3 Weighting Rationale
 
-The weights reflect production priorities:
+The weights reflect benchmark priorities:
 
-- **Accuracy (0.40)**: A security tool's primary value is correctness. Missed threats
-  and false alarms directly impact security posture and developer trust.
-- **Speed (0.25)**: Integration into CI/CD pipelines requires acceptable latency.
-  Slow tools get disabled or moved to infrequent runs, reducing security value.
-- **Coverage (0.20)**: Breadth of protection matters, but a tool that does one thing
-  well is preferable to one that does many things poorly.
-- **Usability (0.15)**: Adoption depends on developer experience, but usability is
-  secondary to functional correctness.
+- **Accuracy (0.40)**: A security tool's primary benchmark value is correctness. Missed threats
+  and false alarms directly impact the measured result.
+- **Speed (0.25)**: Integration into CI/CD pipelines can depend on acceptable latency.
+- **Coverage (0.20)**: Breadth of measurement matters, but a tool that does one thing well
+  is preferable to one that measures many things poorly.
+- **Usability (0.15)**: Adoption depends on developer experience, but usability is secondary
+  to measured functional correctness.
 
 ### 6.4 Custom Weight Profiles
 
@@ -236,15 +234,19 @@ A benchmark run passes the CI gate if ALL of the following hold:
 | No regression vs. prior run        | > -0.05   | Warn (soft gate)  |
 | All declared categories evaluated  | 100%      | Block merge       |
 
+These are **benchmark CI gates**, not evidence that a system is safe or
+production-ready. Deployment decisions require a separate security and
+operational review.
+
 ### 7.2 Gate Levels
 
 Three gate levels are available for pipeline configuration:
 
 | Level    | Composite | Accuracy | Speed  | Coverage | Use Case          |
 |----------|-----------|----------|--------|----------|-------------------|
-| Strict   | ≥ 0.80    | ≥ 0.85   | ≥ 0.70 | ≥ 0.75   | Release candidate |
-| Standard | ≥ 0.60    | ≥ 0.70   | ≥ 0.50 | ≥ 0.60   | PR merge          |
-| Smoke    | ≥ 0.40    | ≥ 0.50   | N/A    | N/A      | Every commit      |
+| Strict   | ≥ 0.80    | ≥ 0.85   | ≥ 0.70 | ≥ 0.75   | Release candidate benchmark gate |
+| Standard | ≥ 0.60    | ≥ 0.70   | ≥ 0.50 | ≥ 0.60   | PR merge benchmark gate          |
+| Smoke    | ≥ 0.40    | ≥ 0.50   | N/A    | N/A      | Every commit benchmark gate     |
 
 ### 7.3 Regression Gate
 
@@ -287,12 +289,12 @@ Each benchmark produces a score card:
 ├─────────────┼────────┼──────────┼───────────────────┤
 │ Accuracy    │  0.91  │  0.40    │  0.364            │
 │ Speed       │  0.85  │  0.25    │  0.213            │
-│ Coverage    │  0.78  │  0.20    │  0.156            │
-│ Usability   │  0.82  │  0.15    │  0.123            │
+│ Coverage    │  0.78  │  0.20    │ 0.156            │
+│ Usability   │  0.82  │  0.15    │ 0.123            │
 ├─────────────┼────────┼──────────┼───────────────────┤
 │ COMPOSITE   │  0.856 │  1.00    │  0.856            │
 ├─────────────┴────────┴──────────┴───────────────────┤
-│ RESULT: PASS (Standard gate: ≥ 0.60)                │
+│ RESULT: PASS (Standard benchmark gate: ≥ 0.60)     │
 └─────────────────────────────────────────────────────┘
 ```
 
@@ -329,6 +331,9 @@ All scores are embedded in the result JSON artifact:
   }
 }
 ```
+
+The result JSON is a benchmark artifact. It must not be interpreted as a
+production approval without separate evidence.
 
 ---
 
