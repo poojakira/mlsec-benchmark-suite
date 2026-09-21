@@ -1,5 +1,7 @@
 # mlsec-benchmark-suite
 
+**Repository owner & maintainer:** Pooja Kiran ([@poojakira](https://github.com/poojakira)) — I review changes, verify public claims, and maintain the repository record.
+
 Regression harness that runs multiple ML security tools against versioned fixtures and catches cross-repo breakage before it ships.
 
 ---
