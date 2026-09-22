@@ -4,7 +4,7 @@
 
 Benchmark fixtures, adapters, schema validation, result signing/tracking, and CI behavior are in scope. Fixture scores do not represent production detection rates.
 
-This is an open-source research/engineering project. Security claims are limited to behavior demonstrated by the repository and its CI/committed evidence; they are not a statement of production certification.
+This is a production-oriented security regression and release-qualification system. Security claims are limited to behavior demonstrated by the repository and its CI/committed evidence; they are not a statement of external certification or deployment history.
 
 ## Reporting a vulnerability
 
