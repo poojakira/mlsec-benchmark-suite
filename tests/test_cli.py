@@ -144,3 +144,34 @@ def test_missing_sibling_runtimeerror_returns_exit_3(tmp_path, monkeypatch, caps
     exit_code = cli.main(["run-iam-lint", "--output", out.as_posix()])
     assert exit_code == 3
     assert "dependency unavailable" in capsys.readouterr().err
+
+
+def test_release_gate_requires_trusted_ed25519_results(tmp_path, monkeypatch):
+    from mlsec_benchmark_suite.cli import generate_ed25519_keypair, sign_payload_ed25519
+
+    out = run_smoke(tmp_path / "smoke", monkeypatch)
+    result = json.loads(out.read_text(encoding="utf-8"))
+
+    private_key = tmp_path / "private.pem"
+    public_key = tmp_path / "public.pem"
+    generate_ed25519_keypair(private_key, public_key)
+    result["signature"] = sign_payload_ed25519(result, private_key)
+    signed = tmp_path / "signed.json"
+    signed.write_text(json.dumps(result), encoding="utf-8")
+
+    gate = tmp_path / "release-gate.json"
+    rc = cli.main([
+        "release-gate",
+        str(signed),
+        "--public-key",
+        str(public_key),
+        "--require-repository",
+        IDENTITY["repository"],
+        "--output",
+        str(gate),
+    ])
+
+    assert rc == 0
+    manifest = json.loads(gate.read_text(encoding="utf-8"))
+    assert manifest["decision"] == "PASS"
+    assert manifest["verified_results"][0]["repository"] == IDENTITY["repository"]
