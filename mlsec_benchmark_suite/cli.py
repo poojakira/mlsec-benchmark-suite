@@ -377,7 +377,13 @@ def build_smoke_result(args: argparse.Namespace) -> dict[str, Any]:
     return payload
 
 
-def validate_result(result: dict[str, Any], *, require_signature: bool = False) -> None:
+def validate_result(
+    result: dict[str, Any],
+    *,
+    require_signature: bool = False,
+    trusted_public_key: Path | None = None,
+    require_ed25519: bool = False,
+) -> None:
     missing = REQUIRED_RESULT_FIELDS - set(result)
     if missing:
         raise ValueError(f"result missing fields: {sorted(missing)}")
@@ -400,11 +406,13 @@ def validate_result(result: dict[str, Any], *, require_signature: bool = False) 
         if category not in result["results"]:
             raise ValueError(f"missing benchmark category: {category}")
     signature = result["signature"]
-    if require_signature and signature.get("algorithm") == "unsigned":
-        raise ValueError("signed result required")
     algorithm = signature.get("algorithm")
+    if require_signature and algorithm == "unsigned":
+        raise ValueError("signed result required")
+    if require_ed25519 and algorithm != "ed25519":
+        raise ValueError("production release gate requires Ed25519-signed results")
     if algorithm == "ed25519":
-        if not verify_signature_ed25519(result, None):
+        if not verify_signature_ed25519(result, trusted_public_key):
             raise ValueError("result signature verification failed")
     elif algorithm != "unsigned":
         key = os.environ.get("MLSEC_BENCH_SIGNING_KEY")
@@ -541,6 +549,21 @@ def _dispatch(argv: list[str] | None = None) -> int:
         help="Return success even when one or more adapters fail.",
     )
 
+    release_gate = sub.add_parser(
+        "release-gate",
+        help="Validate trusted signed benchmark evidence before a production release.",
+    )
+    release_gate.add_argument("results", nargs="+", type=Path)
+    release_gate.add_argument("--public-key", type=Path, required=True)
+    release_gate.add_argument(
+        "--require-repository",
+        action="append",
+        default=[],
+        help="Repository identity that must be represented in the supplied results. Repeatable.",
+    )
+    release_gate.add_argument("--output", type=Path, required=True)
+    release_gate.add_argument("--overwrite", action="store_true")
+
     index = sub.add_parser("build-index")
     index.add_argument("--results-dir", type=Path, default=Path("results"))
     index.add_argument("--output", type=Path, required=True)
@@ -595,6 +618,51 @@ def _dispatch(argv: list[str] | None = None) -> int:
             raise FileExistsError(f"refusing to overwrite existing artifact: {args.output}")
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(render_report(result), encoding="utf-8")
+        return 0
+    if args.command == "release-gate":
+        verified = []
+        represented: set[str] = set()
+        for path in args.results:
+            result = load_json(path)
+            validate_result(
+                result,
+                require_signature=True,
+                trusted_public_key=args.public_key,
+                require_ed25519=True,
+            )
+            failed_runs = sum(
+                int(item.get("failed_runs", 0))
+                for item in result.get("failure_accounting", {}).values()
+                if isinstance(item, dict)
+            )
+            if failed_runs:
+                raise ValueError(f"{path}: benchmark records {failed_runs} failed run(s)")
+            repository = result["input_identity"]["repository"]
+            represented.add(repository)
+            verified.append(
+                {
+                    "path": path.as_posix(),
+                    "repository": repository,
+                    "repository_commit": result["input_identity"]["repository_commit"],
+                    "run_id": result["run_id"],
+                    "payload_sha256": result["signature"]["payload_sha256"],
+                }
+            )
+
+        missing = sorted(set(args.require_repository) - represented)
+        if missing:
+            raise ValueError(f"release evidence missing required repositories: {missing}")
+
+        manifest = {
+            "schema_version": "mlsec-release-gate-v1",
+            "created_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
+            "trusted_public_key_sha256": sha256_bytes(args.public_key.read_bytes()),
+            "verified_results": verified,
+            "required_repositories": sorted(args.require_repository),
+            "decision": "PASS",
+        }
+        write_json(args.output, manifest, overwrite=args.overwrite)
+        print(f"release gate PASS: {len(verified)} signed result(s) verified")
         return 0
     if args.command == "build-index":
         write_json(args.output, build_index(args.results_dir), overwrite=args.overwrite)
