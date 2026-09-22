@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "mlsec-benchmark-suite"
 version = "1.0.0"
-description = "Reproducible benchmark and evidence infrastructure for ML security portfolio repositories."
+description = "Reproducible release-qualification and evidence infrastructure for ML security products."
 readme = "README.md"
 requires-python = ">=3.10"
 license = "Apache-2.0"
