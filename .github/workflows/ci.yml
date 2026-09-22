@@ -137,8 +137,8 @@ jobs:
     needs: [test]
     timeout-minutes: 20
     env:
-      AWS_GUARD_REF: dd52ac3c070a4e3527e98fb4c22e001ae3f3cdb1
-      HF_SCANNER_REF: 440d442ac336502ecbe5d67ae2ad5e207c255a23
+      AWS_GUARD_REF: 8ba7abbbaff9d0a3f9a8ff69a9811d390c15b46e
+      HF_SCANNER_REF: e0cb4018f40bfac51a783e9a7e194a4313e5246b
 
     steps:
       - uses: actions/checkout@v4
@@ -201,7 +201,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
-          pip install "hf-scanner @ git+https://github.com/poojakira/hf-model-provenance-scanner.git@440d442ac336502ecbe5d67ae2ad5e207c255a23"
+          pip install "hf-scanner @ git+https://github.com/poojakira/hf-model-provenance-scanner.git@e0cb4018f40bfac51a783e9a7e194a4313e5246b"
 
       - name: Run REAL adapter integration test (no mock)
         run: |
