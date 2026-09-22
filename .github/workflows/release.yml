@@ -21,8 +21,17 @@ jobs:
           python-version: "3.12"
       - name: Install package
         run: python -m pip install -e ".[dev]"
-      - name: Install pinned portfolio adapter dependency
-        run: python -m pip install "git+https://github.com/poojakira/aws-agent-identity-guard.git@dd52ac3c070a4e3527e98fb4c22e001ae3f3cdb1"
+      - name: Install pinned required product adapters
+        run: |
+          python -m pip install "aws-agent-identity-guard @ git+https://github.com/poojakira/aws-agent-identity-guard.git@8ba7abbbaff9d0a3f9a8ff69a9811d390c15b46e"
+          python -m pip install "hf-scanner @ git+https://github.com/poojakira/hf-model-provenance-scanner.git@e0cb4018f40bfac51a783e9a7e194a4313e5246b"
+      - name: Run required real adapter release gates
+        run: |
+          python -m mlsec_benchmark_suite run-iam-lint --output results/release-iam.json --overwrite
+          python -m mlsec_benchmark_suite validate results/release-iam.json
+          python -m mlsec_benchmark_suite run-hf-scanner --output results/release-hf.json --overwrite
+          python -m mlsec_benchmark_suite validate results/release-hf.json
+
       - name: Build wheel
         run: python -m build
       - name: Generate SBOM
@@ -59,3 +68,5 @@ jobs:
             dist/*
             sbom.cdx.json
             results/release-smoke.json
+            results/release-iam.json
+            results/release-hf.json
