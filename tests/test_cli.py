@@ -151,6 +151,10 @@ def test_release_gate_requires_trusted_ed25519_results(tmp_path, monkeypatch):
 
     out = run_smoke(tmp_path / "smoke", monkeypatch)
     result = json.loads(out.read_text(encoding="utf-8"))
+    # This test exercises the successful release path, so its signed fixture
+    # must satisfy the same zero-failed-runs policy enforced in production.
+    for accounting in result["failure_accounting"].values():
+        accounting["failed_runs"] = 0
 
     private_key = tmp_path / "private.pem"
     public_key = tmp_path / "public.pem"
