@@ -25,6 +25,12 @@ CATEGORIES = [
     "adversarial_robustness",
     "pulsenet",
 ]
+ADAPTER_CATEGORIES = {
+    "iam_lint",
+    "hf_scanner",
+    "prompt_injection",
+    "spectral",
+}
 REQUIRED_RESULT_FIELDS = {
     "schema_version",
     "suite_version",
@@ -402,9 +408,27 @@ def validate_result(
         value = identity[field]
         if not isinstance(value, str) or not value:
             raise ValueError(f"identity field {field} is required")
-    for category in CATEGORIES:
-        if category not in result["results"]:
-            raise ValueError(f"missing benchmark category: {category}")
+    result_categories = set(result["results"])
+    if result["contract_version"] == "portfolio-smoke-v1":
+        missing_categories = set(CATEGORIES) - result_categories
+        extra_categories = result_categories - set(CATEGORIES)
+        if missing_categories:
+            raise ValueError(f"missing benchmark categories: {sorted(missing_categories)}")
+        if extra_categories:
+            raise ValueError(f"unexpected benchmark categories: {sorted(extra_categories)}")
+    else:
+        if not result_categories:
+            raise ValueError("adapter result must contain at least one benchmark category")
+        unknown_categories = result_categories - ADAPTER_CATEGORIES
+        if unknown_categories:
+            raise ValueError(f"unknown adapter benchmark categories: {sorted(unknown_categories)}")
+        accounting_categories = set(result["failure_accounting"])
+        if accounting_categories != result_categories:
+            raise ValueError(
+                "failure_accounting categories must exactly match result categories: "
+                f"results={sorted(result_categories)}, "
+                f"failure_accounting={sorted(accounting_categories)}"
+            )
     signature = result["signature"]
     algorithm = signature.get("algorithm")
     if require_signature and algorithm == "unsigned":
