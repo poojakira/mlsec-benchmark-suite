@@ -25,6 +25,7 @@ CATEGORIES = [
     "adversarial_robustness",
     "pulsenet",
 ]
+ADAPTER_CATEGORIES = set(CATEGORIES) | {"iam_lint"}
 ADAPTER_CATEGORIES = {
     "iam_lint",
     "hf_scanner",
