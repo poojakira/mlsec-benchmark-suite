@@ -82,3 +82,11 @@ def test_cli_run_iam_lint(tmp_path):
     assert output.exists()
     result = json.loads(output.read_text(encoding="utf-8"))
     assert result["results"]["iam_lint"]["aggregate_metrics"]["f1"] == 1.0
+
+
+def test_adapter_result_passes_shared_validator():
+    """Per-adapter IAM output must pass the shared structural validator."""
+    from mlsec_benchmark_suite.cli import validate_result
+
+    result = run_benchmark(fixtures_dir=FIXTURES_DIR)
+    validate_result(result)
