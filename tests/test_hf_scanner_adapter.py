@@ -170,3 +170,16 @@ def test_real_scanner_detects_all_bad_and_no_false_positives():
             for finding in fixture["findings_detail"]:
                 assert isinstance(finding, dict)
                 assert finding["rule"], finding
+
+
+@patch(
+    "mlsec_benchmark_suite.adapters.hf_scanner_adapter.analyze_config_file",
+    _mock_analyze_config_file,
+)
+def test_adapter_result_passes_shared_validator():
+    """Per-adapter HF output must pass the shared structural validator."""
+    from mlsec_benchmark_suite.adapters.hf_scanner_adapter import run_benchmark
+    from mlsec_benchmark_suite.cli import validate_result
+
+    result = run_benchmark(fixtures_dir=FIXTURES_DIR)
+    validate_result(result)
