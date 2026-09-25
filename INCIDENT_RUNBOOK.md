@@ -1,6 +1,15 @@
 # Incident Runbook — MLSec Benchmark Suite
 
-This runbook covers common incidents related to the benchmark infrastructure, their diagnosis, and resolution procedures.
+> **Template / self-review reference, not an operated service.** This is a
+> single-maintainer research and portfolio project. There is no operated
+> production service, no on-call rotation, no PagerDuty, no team Slack channel,
+> and no SLA behind this repository. The procedures below are a reference for
+> whoever is running the benchmark suite locally or in their own CI; references
+> to "team", "on-call", severity response times, and post-mortems are template
+> placeholders to adapt if you operate this in a larger setting, not commitments
+> made by this project.
+
+This runbook covers common issues with the benchmark harness and CI, their diagnosis, and resolution procedures.
 
 ---
 
@@ -38,8 +47,8 @@ This runbook covers common incidents related to the benchmark infrastructure, th
 - **External endpoint down:** Wait and retry; check provider status pages
 - **Data corruption:** Restore from git history: `git checkout HEAD -- data/`
 
-### Escalation
-If unresolved after 15 minutes, notify the team lead in #mlsec-benchmarks Slack channel.
+### If unresolved
+If the run cannot be fixed quickly, open a tracking issue documenting the failure and the diagnosis steps already tried.
 
 ---
 
@@ -97,8 +106,8 @@ If unresolved after 15 minutes, notify the team lead in #mlsec-benchmarks Slack 
   ```
 - **Incorrect baseline:** If the baseline itself was faulty, reset it with team consensus
 
-### Escalation
-If regression is confirmed and cannot be resolved in the current sprint, create a tracking issue and get tech lead approval to merge with known regression.
+### If it cannot be resolved
+If a regression is confirmed and cannot be resolved immediately, open a tracking issue and record the decision (fix, revert, or accept with documented tradeoff) in the PR.
 
 ---
 
@@ -151,8 +160,8 @@ If regression is confirmed and cannot be resolved in the current sprint, create 
 - **Tampered results:** Investigate who/what modified the files; restore from signed backups
 - **Algorithm mismatch:** Ensure all environments use the same HMAC algorithm (SHA-256)
 
-### Escalation
-Signature failures may indicate a security incident. Notify security team immediately if tampering is suspected.
+### If tampering is suspected
+Signature failures may indicate that a result file was modified after signing. Investigate what changed, restore from a signed copy in version control, and document the finding.
 
 ---
 
@@ -231,41 +240,47 @@ jobs:
 
 ---
 
-## General Incident Guidelines
+## General Guidelines
 
-### Severity Levels
+> The severity levels, response times, and contacts below are a **template** to
+> adapt if this suite is ever operated in a team setting. They are not an
+> operated SLA, on-call rotation, or paging arrangement for this repository as
+> published.
 
-| Level | Description | Response Time | Examples |
+### Severity Levels (template)
+
+| Level | Description | Suggested priority | Examples |
 |-------|-------------|---------------|----------|
-| P1 - Critical | Benchmarks cannot run at all | < 1 hour | All adapters down, signing key compromised |
-| P2 - High | Partial failure or data integrity issue | < 4 hours | Single adapter failure, result corruption |
-| P3 - Medium | Degraded performance or flaky tests | < 1 business day | Intermittent timeouts, coverage drop |
-| P4 - Low | Minor issues, no immediate impact | < 1 week | Report formatting issues, documentation gaps |
+| P1 - Critical | Benchmarks cannot run at all | Address first | All adapters down, signing key compromised |
+| P2 - High | Partial failure or data integrity issue | Address soon | Single adapter failure, result corruption |
+| P3 - Medium | Degraded performance or flaky tests | Backlog | Intermittent timeouts, coverage drop |
+| P4 - Low | Minor issues, no immediate impact | When convenient | Report formatting issues, documentation gaps |
 
-### Communication
+### Recording an issue
 
-1. Post in `#mlsec-benchmarks` Slack channel with:
-   - Severity level
+Track significant failures in the issue tracker with:
+   - Suggested priority
    - What's broken
-   - Impact (who/what is affected)
+   - What is affected
    - Current status (investigating/mitigating/resolved)
-2. For P1/P2: Page on-call via PagerDuty
-3. Update status every 30 minutes for P1, every 2 hours for P2
 
 ### Post-Incident
 
 After resolution:
-1. Write a brief post-mortem (for P1/P2)
+1. Write a brief write-up for significant (P1/P2-class) failures
 2. Create follow-up issues for preventive measures
-3. Update this runbook if the incident revealed a gap
+3. Update this runbook if the failure revealed a gap
 
 ---
 
 ## Contacts
 
-| Role | Contact | When |
-|------|---------|------|
-| Benchmark Team Lead | @team-lead | P1/P2 incidents |
-| Security Team | @security | Signature/integrity incidents |
-| Infrastructure | @infra | CI runner issues |
-| On-Call | PagerDuty | After-hours P1 |
+This is a single-maintainer project. Route questions and reports through the
+GitHub repository (issues / private security advisory). The role-based table
+below is a template for teams that adopt this suite; it is not an operated
+on-call or paging arrangement for this repository.
+
+| Role (template) | Route |
+|------|---------|
+| Benchmark maintainer | GitHub issues |
+| Security reports | GitHub private security advisory |
