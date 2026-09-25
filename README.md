@@ -1,6 +1,6 @@
 # mlsec-benchmark-suite
 
-**Repository owner & maintainer:** Pooja Kiran ([@poojakira](https://github.com/poojakira)) — I own and maintain this repository and drive its design, engineering, validation, documentation, and evidence-backed releases.
+**Maintainer:** Pooja Kiran ([@poojakira](https://github.com/poojakira))
 
 Regression harness that runs multiple ML security tools against versioned fixtures and catches cross-repo breakage before it ships.
 
@@ -330,7 +330,7 @@ Total: 67 test functions across 8 test modules.
 
 ---
 
-## Production Readiness Assessment
+## Release Readiness Assessment
 
 | Criterion | Status | Notes |
 |-----------|--------|-------|
@@ -358,7 +358,7 @@ Total: 67 test functions across 8 test modules.
 - **Adapter generator**: Scaffold new adapters from a template to reduce onboarding time for new tools.
 - **Fuzzing mode**: Complement static fixtures with property-based testing to discover unexpected failure modes.
 - **Result history and trending**: Persist results across runs for time-series analysis of pass rates and findings counts.
-- **Broader fixture coverage**: Add edge cases (empty inputs, extremely large policies, unicode in prompts) to stress test adapter robustness.
+- **Broader fixture coverage**: Add edge cases (empty inputs, extremely large policies, unicode in prompts) to exercise adapter error handling.
 - **Release automation**: Tag versions, publish to PyPI, maintain a changelog.
 
 ---
