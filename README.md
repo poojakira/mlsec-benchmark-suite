@@ -120,7 +120,7 @@ Component responsibilities:
 | `reports/` | Generated Markdown reports for human review (via the `report` subcommand). |
 | `dashboard/` | Static HTML page served via GitHub Pages for at-a-glance status. |
 | `datasets/` | Fixture set manifests describing which inputs belong to which test suites. |
-| `tests/` | 67 test functions across 8 test modules covering all adapters, CLI, integration, Ed25519 signing, and dataset checksum verification. |
+| `tests/` | 70 test functions across 8 test modules covering all adapters, CLI, integration, Ed25519 signing, and dataset checksum verification. |
 
 ---
 
@@ -320,7 +320,7 @@ See [RUNBOOK.md](RUNBOOK.md) for the full operational reference for every subcom
 | CLI interface | Subcommand invocations | `test_cli.py` |
 | Ed25519 signing + dataset integrity | Keygen/sign/verify, tamper detection, checksum verification | `test_signing_and_dataset.py` |
 
-Total: 67 test functions across 8 test modules.
+Total: 70 test functions across 8 test modules.
 
 **Limitations:**
 - The suite tests tools against static, curated fixtures. It does not measure real-world detection rates or false positive rates on production data.
@@ -335,7 +335,7 @@ Total: 67 test functions across 8 test modules.
 | Criterion | Status | Notes |
 |-----------|--------|-------|
 | Automated CI | Yes | GitHub Actions workflow + Dependabot |
-| Test coverage | 67 test functions across 8 modules, all 4 adapters exercised | No coverage gaps in adapter layer |
+| Test coverage | 70 test functions across 8 modules, all 4 adapters exercised | No coverage gaps in adapter layer |
 | Schema validation | Enforced on every run | Catches output drift automatically |
 | Contract versioning | `portfolio-smoke-v1.json` | Versioned filename allows schema evolution |
 | Dependency hygiene | Zero runtime deps, pip-audit in CI | Minimal supply chain risk |

@@ -182,7 +182,7 @@ pytest tests/ -q
 # 66 passed, 1 skipped   (without it — the real-detector test is skipped)
 ```
 
-67 test functions across 8 modules: 4 adapter modules, `test_cli.py` (CLI dispatch,
+70 test functions across 8 modules: 4 adapter modules, `test_cli.py` (CLI dispatch,
 clean-error exit codes 2 & 3, HMAC signing/tamper detection), `test_run_all.py`
 (aggregate + partial-failure handling), `test_tracker.py` (trend/regression
 analysis), and `test_signing_and_dataset.py` (Ed25519 keygen/sign/verify
