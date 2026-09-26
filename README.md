@@ -1,5 +1,18 @@
 # mlsec-benchmark-suite
 
+<!-- security-systems-poster -->
+## Research Poster
+
+**Security Systems / 09 — Reproducible Regression Harness for Machine-Learning Security Tools**
+
+[![Research poster](poster/poster.png)](poster/poster_36x48.pdf)
+
+> Technical research poster (36 x 48 in). Click the image for the print-resolution **[PDF](poster/poster_36x48.pdf)**.
+> Every metric on it is evidence-backed; historical/projected numbers are labeled and separated from current results.
+> Part of the *Pooja Kiran - Security Systems* engineering poster collection.
+<!-- security-systems-poster -->
+
+
 **Maintainer:** Pooja Kiran ([@poojakira](https://github.com/poojakira))
 
 Regression harness that runs multiple ML security tools against versioned fixtures and catches cross-repo breakage before it ships.
