@@ -178,8 +178,8 @@ The `combined.json` it writes is aggregate-only — do **not** pass it to
 
 ```bash
 pytest tests/ -q
-# 67 passed              (with hf-scanner installed)
-# 66 passed, 1 skipped   (without it — the real-detector test is skipped)
+# 70 passed              (with hf-scanner installed)
+# 69 passed, 1 skipped   (without it — the real-detector test is skipped)
 ```
 
 70 test functions across 8 modules: 4 adapter modules, `test_cli.py` (CLI dispatch,

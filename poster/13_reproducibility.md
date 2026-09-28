@@ -1,6 +1,6 @@
 # Reproduce the Work — Poster 09
 
-**Repository:** `github.com/poojakira/mlsec-benchmark-suite` · MIT • Python 3.12 • HEAD 78b4667 • verified 2026-09-26
+**Repository:** `github.com/poojakira/mlsec-benchmark-suite` · MIT • Python 3.12 • HEAD 7919488 • verified 2026-09-26
 
 ```
 mlsec-benchmark run-hf-scanner --output r.json
