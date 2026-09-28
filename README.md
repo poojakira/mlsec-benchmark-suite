@@ -15,17 +15,49 @@
 
 **Maintainer:** Pooja Kiran ([@poojakira](https://github.com/poojakira))
 
-Regression harness that runs multiple ML security tools against versioned fixtures and catches cross-repo breakage before it ships.
+## Overview
 
----
+`mlsec-benchmark-suite` is a cross-repo regression harness. It wraps each ML security tool in a typed Python adapter, imports it in-process against frozen fixtures, and validates outputs against a shared JSON schema so contract drift between tools fails `pytest` immediately. It exists because tools that each pass in isolation can still break each other when one changes its output format.
 
-## What Problem This Solves
+## Verified Snapshot
 
-I maintain several ML security tools in separate repos. Each has its own tests, and each passes in isolation. But when one tool changes its output format, downstream tools that consume that output break silently. You don't find out until someone notices missing findings weeks later.
+Reproduced on current `main` (Python 3.12).
 
-This suite wraps each tool in a typed Python adapter, imports it in-process against frozen inputs, and validates outputs against a shared JSON schema. If any tool drifts from its contract, `pytest` fails immediately. One command tells you whether the portfolio still works as a whole.
+| Metric | Current verified result |
+|---|---:|
+| Tests | 70 collected — 69 passed, 1 skipped (real-detector test, needs hf-scanner) |
+| With hf-scanner installed | 70 passed |
+| Adapters | typed, in-process, schema-validated |
+| Signing | Ed25519 sign/verify + dataset checksum |
 
----
+## Security Problem
+
+A portfolio of independently maintained security tools has an integration risk: when one tool changes its output format, downstream tools that consume it break silently, and missing findings may not surface for weeks. This suite validates every tool's output against a shared contract on every run, so cross-repo breakage is caught before it ships.
+
+## Threat Model & Scope
+
+**In scope:** in-process regression/contract testing of sibling tool adapters against versioned fixtures; Ed25519 signing and dataset-checksum verification of benchmark artifacts.
+
+**Out of scope / not claimed:** It is a regression harness, not a security scanner itself. Sibling modules are mocked for unit tests, so the suite is green with no sibling tools installed; the one real-detector test is skipped without hf-scanner. Fixture results are contract checks, not real-world detection rates.
+
+## Architecture
+
+```text
+Versioned fixtures  -->  typed per-tool adapters (in-process import)
+      |
+      v
+Shared JSON output schema validation
+      |
+      v
+pytest pass/fail  +  Ed25519-signed benchmark artifacts (tamper/wrong-key detection)
+```
+
+## Core Capabilities
+
+- Typed in-process adapters for sibling ML security tools
+- Shared JSON-schema contract validation across tools
+- CLI dispatch with clean-error exit codes; aggregate + partial-failure handling
+- Trend/regression analysis and Ed25519 sign/verify + dataset checksum verification
 
 ## How It Works
 
