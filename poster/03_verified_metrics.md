@@ -1,6 +1,6 @@
 # Verified Metrics — Poster 09
 
-MIT • Python 3.12 • HEAD 78b4667 • verified 2026-09-26. Verified for this poster on Windows / CPython 3.12.10.
+MIT • Python 3.12 • HEAD 7919488 • verified 2026-09-26. Verified for this poster on Windows / CPython 3.12.10.
 
 ## Headline cards
 - 1.00 — HF-SCANNER F1
