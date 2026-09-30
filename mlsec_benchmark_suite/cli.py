@@ -207,9 +207,12 @@ def generate_ed25519_keypair(private_out: Path, public_out: Path, *, overwrite: 
             raise FileExistsError(f"refusing to overwrite existing key: {out}")
     private_key = Ed25519PrivateKey.generate()
     private_out.parent.mkdir(parents=True, exist_ok=True)
-    private_out.write_bytes(
-        private_key.private_bytes(Encoding.PEM, PrivateFormat.PKCS8, NoEncryption())
-    )
+    flags = os.O_WRONLY | os.O_CREAT | (os.O_TRUNC if overwrite else os.O_EXCL)
+    flags |= getattr(os, "O_NOFOLLOW", 0)
+    fd = os.open(private_out, flags, 0o600)
+    with os.fdopen(fd, "wb") as handle:
+        os.chmod(private_out, 0o600)
+        handle.write(private_key.private_bytes(Encoding.PEM, PrivateFormat.PKCS8, NoEncryption()))
     public_out.parent.mkdir(parents=True, exist_ok=True)
     public_out.write_bytes(
         private_key.public_key().public_bytes(Encoding.PEM, PublicFormat.SubjectPublicKeyInfo)
@@ -230,7 +233,9 @@ def verify_dataset_checksums(manifest: dict[str, Any], fixtures_dir: Path) -> No
         )
     mismatches = []
     for rel_path, expected_digest in sorted(files.items()):
-        target = fixtures_dir / rel_path
+        target = (fixtures_dir / rel_path).resolve()
+        if not target.is_relative_to(fixtures_dir.resolve()):
+            raise ValueError("dataset manifest paths must remain inside the fixture directory")
         if not target.exists():
             mismatches.append(f"{rel_path}: file missing")
             continue

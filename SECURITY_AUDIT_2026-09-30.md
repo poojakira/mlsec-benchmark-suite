@@ -1,38 +1,19 @@
-# Security Audit — 2026-09-30
+# Security review, 30 September 2026
 
-## Scope
-Initial pre-remediation review of current `main`.
+Reviewed baseline: `03850b7261f8e68531f68e038931e120a7b543f0`. Source review and focused regression verification; this is not proof that all vulnerabilities are absent.
 
-## Runtime surface
-Benchmark/fixture suite. Security fixtures intentionally include malicious-looking configuration samples.
+## Fixes and reviewed controls
 
-## Verified controls
-- Malicious fixture files are separated under fixture paths.
-- CI, Dependabot, security-hygiene workflow, pre-commit, release and production documentation are present.
-- No confirmed live API key was found in the current main branch.
+Manifest file paths are resolved and constrained to the fixture directory, rejecting traversal and escaping symlinks. Generated private Ed25519 keys are mode 0600 and created with exclusive/no-follow flags where supported.
 
-## Findings to remediate/verify
-1. Ensure fixtures are never executed/deserialized unsafely during benchmarks.
-2. Keep temporary benchmark directories isolated and cleaned.
-3. Bound benchmark inputs/runtime to avoid resource exhaustion in CI.
-4. Clearly label malicious fixtures so secret scanners and reviewers do not mistake them for production configuration.
+## Verification
 
-## Not applicable
-Auth, SQL tenant isolation, password reset, payments, admin routes.
+72 passed; one optional HF adapter test skipped. Tests ran in an isolated Python 3.12 environment. FastAPI TestClient required execution outside the default sandbox; a minimal unchanged app reproduced the sandbox deadlock. Final installed-environment pip-audit reported no known vulnerabilities. This does not cover every optional dependency, every container image, or arbitrary older environments allowed by broad dependency bounds.
 
-<!-- repo-verification:start -->
-## Verification update — 2026-09-30
+## Secret history review
 
-- **Scope:** Account-wide `poojakira` repository pass covering source/configuration, CI/release workflows, security-hygiene gates, dependency/SAST controls, and documentation consistency.
-- **Remediation:** Pinned the CI workflow actions to immutable revisions while preserving signing and benchmark evidence generation.
-- **Verification state:** CI, Production Gate, Security Hygiene, and Documentation Integrity completed successfully after the hardening commit.
-- **Security note:** Benchmark scores are reproducible test evidence and should not be described as production guarantees.
-- **Evidence boundary:** This update records repository and GitHub Actions evidence observed during the pass. It is not a claim of independent penetration testing, production deployment, or zero residual risk.
-<!-- repo-verification:end -->
+206 history matches were previously committed virtual-environment vendor tests/license metadata. Historical PEM files were certifi public CA bundles, not private keys. No tracked environment secret file was found. Gitleaks classifications are pattern matches, not provider validity checks. No provider key was tested or revoked, and fetched Git refs do not include every cached/forked copy. `.env` and local credential patterns remain ignored; example files must contain placeholders only.
 
-## Verification checkpoint — 2026-09-30
+## Deployment and remaining limits
 
-- **Snapshot commit:** `8134ea47252e5e7161dcbfc0daf5a9bd1dc3c6c0`
-- **Status:** VERIFIED GREEN
-- **Evidence:** Security Hygiene, Documentation Integrity, Production Gate, and CI all completed successfully on the current main revision.
-- This checkpoint is intentionally date-bounded. It does not claim zero vulnerabilities or universal production readiness.
+This is a local CLI, not a network API: authentication, endpoint rate limits and remote uploads are not applicable. Embedded-key signature verification proves self-consistency; pass a trusted external public key for signer identity. Local input files and output paths are operator-controlled; do not expose this CLI to untrusted remote users without a separate authorization and sandbox boundary.
