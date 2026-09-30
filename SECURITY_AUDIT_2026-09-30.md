@@ -29,3 +29,10 @@ Auth, SQL tenant isolation, password reset, payments, admin routes.
 - **Security note:** Benchmark scores are reproducible test evidence and should not be described as production guarantees.
 - **Evidence boundary:** This update records repository and GitHub Actions evidence observed during the pass. It is not a claim of independent penetration testing, production deployment, or zero residual risk.
 <!-- repo-verification:end -->
+
+## Verification checkpoint — 2026-09-30
+
+- **Snapshot commit:** `8134ea47252e5e7161dcbfc0daf5a9bd1dc3c6c0`
+- **Status:** VERIFIED GREEN
+- **Evidence:** Security Hygiene, Documentation Integrity, Production Gate, and CI all completed successfully on the current main revision.
+- This checkpoint is intentionally date-bounded. It does not claim zero vulnerabilities or universal production readiness.
