@@ -462,7 +462,7 @@ The most useful testing infrastructure is the kind that tests the boundaries bet
 
 - **Snapshot commit:** `8134ea47252e5e7161dcbfc0daf5a9bd1dc3c6c0`
 - **Status:** VERIFIED GREEN
-- **Evidence:** Security Hygiene, Documentation Integrity, Production Gate, and CI all completed successfully on the current main revision.
+- **Evidence:** Security Hygiene, Documentation Integrity, Production Gate, and CI all completed successfully for the cited snapshot revision.
 - This checkpoint is intentionally date-bounded. It does not claim zero vulnerabilities or universal production readiness.
 
 
