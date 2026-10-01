@@ -3,7 +3,7 @@
 > Evidence status: This is a dated repository snapshot at the commit identified below. `VERIFIED_AT_SNAPSHOT` means verified for that commit and environment; it does not assert the same result on the latest `main`. Compare newer claims with the repository evidence before reuse.
 
 ## Repository
-`github.com/poojakira/mlsec-benchmark-suite` (public, default branch `main`, primary language Python). MIT • Python 3.12 • HEAD 7919488 • verified 2026-09-26
+`github.com/poojakira/mlsec-benchmark-suite` (public, default branch `main`, primary language Python). MIT • Python 3.12 • HEAD 155f414188954be16d90f8e14370b81e5dde318e • verified 2026-10-01
 
 ## Academic Project Title
 **Reproducible Regression Harness for Machine-Learning Security Tools**
@@ -38,7 +38,7 @@ O4 — Real adapter gating in CI
 
 ## Evidence at Poster Snapshot + Claim Ledger
 - **VERIFIED_AT_SNAPSHOT** — Real HF-scanner adapter: precision=recall=F1=1.0 on 5 fixtures — README verified real run; tests/test_hf_scanner_adapter.py end-to-end (no mock); total_tp=3,total_fp=0,total_fn=0.
-- **VERIFIED_AT_SNAPSHOT** — 70 test functions across suite — Counted def test_ in tests/ (HEAD 7919488).
+- **VERIFIED_AT_SNAPSHOT** — 73 test functions across 9 test modules; current Python 3.12 CI recorded 72 passed, 1 skipped with 88.34% statement coverage — repository README and test tree at HEAD 155f414188954be16d90f8e14370b81e5dde318e.
 - **VERIFIED_AT_SNAPSHOT** — JSON-schema contracts + versioned fixtures; pytest fails on drift — README how-it-works; schemas/ + contracts/ present.
 - **UNSUPPORTED (disclaimed by repo)** — run-smoke per-category numbers — README: seeded-PRNG synthetic scaffold for plumbing, NOT measurements. Shown as synthetic only.
 - **UNSUPPORTED (disclaimed)** — Real-world accuracy of wrapped tools — Suite validates contracts/format, not accuracy.
