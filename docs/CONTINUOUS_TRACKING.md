@@ -196,8 +196,8 @@ manual workflow dispatch
   └── tracker (runs after test passes)
         ├── Run benchmarks → results/
         ├── Run trend analysis
-        ├── Upload report as artifact
-        └── Comment on PR (if PR event)
+        ├── Upload report as artifact when enabled
+        └── Review the generated report from the explicitly started run
 ```
 
 ### What Happens on Regression
