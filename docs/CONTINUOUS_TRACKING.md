@@ -14,7 +14,7 @@ The continuous tracking system monitors benchmark metrics over time, detects per
 - **Trend Detection:** Classifies each metric as improving, degrading, or stable
 - **Regression Alerting:** Flags metrics that degrade more than 10% from baseline
 - **Markdown Reports:** Generates human-readable trend reports for PR reviews
-- **CI Integration:** Runs automatically on every push and PR via GitHub Actions
+- **CI Integration:** Available through manual GitHub Actions dispatch; automatic push/PR execution is intentionally disabled for zero-cost operation
 
 ---
 
@@ -186,7 +186,7 @@ The tracking system is integrated into the CI pipeline via the `tracker` job in 
 ### Pipeline Flow
 
 ```
-push/PR
+manual workflow dispatch
   │
   ├── test (pytest + coverage gate at 85%)
   │     └── MUST PASS
@@ -204,8 +204,8 @@ push/PR
 
 1. The `tracker` job exits with code 1
 2. The CI pipeline fails (blocking merge)
-3. A sticky comment is posted on the PR with the trend report
-4. The team reviews the regression table to determine next steps
+3. The generated trend report is available as a workflow artifact when artifact upload is enabled for that explicit run
+4. The reviewer checks the regression table before deciding whether to merge or release
 
 ### Handling Expected Regressions
 
