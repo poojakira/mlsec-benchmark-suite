@@ -34,7 +34,7 @@ jobs:
             --cov=mlsec_benchmark_suite \
             --cov-report=term-missing \
             --cov-report=xml:coverage.xml \
-            --cov-fail-under=85 \
+            --cov-fail-under=90 \
             -v
 
       - name: Upload coverage report
