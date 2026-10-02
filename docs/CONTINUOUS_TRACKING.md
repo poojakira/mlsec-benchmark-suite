@@ -188,7 +188,7 @@ The tracking system is integrated into the CI pipeline via the `tracker` job in 
 ```
 manual workflow dispatch
   │
-  ├── test (pytest + coverage gate at 85%)
+  ├── test (pytest + coverage gate at 90%)
   │     └── MUST PASS
   │
   ├── lint (ruff + mypy)
