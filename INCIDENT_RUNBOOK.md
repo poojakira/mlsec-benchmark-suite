@@ -55,8 +55,8 @@ If the run cannot be fixed quickly, open a tracking issue documenting the failur
 ## 2. Coverage Gate Failure
 
 ### Symptoms
-- CI `test` job fails with message: `FAIL Required test coverage of 85% not reached`
-- `pytest --cov-fail-under=85` exits with non-zero code
+- CI `test` job fails with message: `FAIL Required test coverage of 90% not reached`
+- `pytest --cov-fail-under=90` exits with non-zero code
 
 ### Diagnosis
 1. Check coverage report for uncovered lines:
