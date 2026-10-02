@@ -24,16 +24,32 @@ def sec(*names: str) -> str:
 def items(block: str) -> list[str]:
     out=[]
     for line in block.splitlines():
-        m=re.match(r"^\s*(?:[-*]|\d+\.)\s+(.*)", line)
+        m=re.match(r"^\s*(?:[-*•]|\d+[.)])\s+(.*)", line)
         if m:
             v=clean(m.group(1))
             if v:
                 out.append(v)
+    if not out:
+        compact=clean(block)
+        if "->" in compact:
+            for part in compact.split("->"):
+                v=re.sub(r"^\s*\d+(?:[.·]\d+)?\s*", "", part).strip()
+                if v:
+                    out.append(v)
+        elif compact:
+            out.append(compact)
     return out
 
-def strip_fences(s: str) -> str:
-    s=re.sub(r"(?ms)```.*?```", "", s)
-    return clean(s)
+def reproducibility_text(s: str) -> str:
+    blocks = re.findall(r"(?ms)```(?:[A-Za-z0-9_-]+)?\n(.*?)```", s)
+    outside = re.sub(r"(?ms)```.*?```", "", s)
+    parts = []
+    if blocks:
+        parts.append("\n".join(line.rstrip() for line in blocks[0].strip().splitlines()))
+    prose = clean(outside)
+    if prose:
+        parts.append(prose)
+    return "\n\n".join(parts).strip()
 
 title = clean(sec("Academic Project Title","Project Title")) or repo.name.replace("-"," ").title()
 subtitle = clean(sec("Subtitle"))
@@ -41,7 +57,7 @@ contribution = clean(sec("One-Sentence Contribution","Contribution","Research Co
 methods = items(sec("Method","Methodology"))[:6]
 evidence = items(sec("Current Verified Evidence","Verified Evidence","Evidence at Poster Snapshot + Claim Ledger"))[:7]
 limits = items(sec("Honest Boundaries","Limitations","Limitations & Residual Risk"))[:6]
-repro = strip_fences(sec("Reproducibility"))[:560]
+repro = reproducibility_text(sec("Reproducibility"))[:900]
 repository = clean(sec("Repository")) or f"github.com/poojakira/{repo.name}"
 
 metrics=[]
@@ -149,8 +165,8 @@ h1 { font-size: 46pt; line-height: 1.04; margin: .12in 0 .12in; max-width: 33in;
 }
 .arch h2 { color: #8ce9fa; border-bottom-color: #2d93b1; }
 .contrib { background: #eaf8fb; border-color: #96d9e8; }
-.contrib p { font-size: 18pt; line-height: 1.38; font-weight: 600; margin: .08in 0 0; }
-.card p, .card li { font-size: 15.2pt; line-height: 1.34; }
+.contrib p { font-size: 21pt; line-height: 1.34; font-weight: 600; margin: .08in 0 0; }
+.card p, .card li { font-size: 19pt; line-height: 1.30; }
 .card ul { margin: .04in 0 0 .28in; padding: 0; }
 .card li { margin: .08in 0; }
 .evidence { border-left: 10px solid #178e75; }
@@ -169,17 +185,17 @@ h1 { font-size: 46pt; line-height: 1.04; margin: .12in 0 .12in; max-width: 33in;
   position: absolute; left: .24in; top: .25in; width: .46in; height: .46in; border-radius: 50%;
   background: #28a6c7; color: #061a2b; font-size: 14pt; font-weight: 900; display:flex; align-items:center; justify-content:center;
 }
-.flow-text { font-size: 15pt; line-height: 1.28; font-weight: 650; color: #eef9fc; }
+.flow-text { font-size: 18pt; line-height: 1.28; font-weight: 650; color: #eef9fc; }
 .flow-node::after { content: "\2192"; position:absolute; right:-.30in; top:50%; transform:translateY(-50%); color:#6fd2e9; font-size:24pt; font-weight:900; z-index:4; }
 .flow-node:nth-child(3n)::after { content:""; }
 .flow-node:nth-child(3)::after { content:"\2193"; right:50%; top:auto; bottom:-.43in; transform:translateX(50%); }
 .arch-note { font-size: 13.5pt; color: #a9dcea; margin-top: .30in; }
 
 .method-list { display: grid; grid-template-columns: 1fr 1fr; gap: .20in .28in; margin-top: .10in; }
-.method-chip { background:#f3f8fb; border:2px solid #d2e2eb; border-radius:.12in; padding:.20in .22in; font-size:14.5pt; line-height:1.3; font-weight:650; }
+.method-chip { background:#f3f8fb; border:2px solid #d2e2eb; border-radius:.12in; padding:.20in .22in; font-size:18pt; line-height:1.28; font-weight:650; }
 .right-stack { display:grid; grid-template-rows: 1.05fr .95fr; gap:.40in; height:100%; }
 .repro { background:#f8fbfd; }
-.repro p { font-family: "Cascadia Mono","Consolas",monospace; font-size: 13.3pt; line-height: 1.34; color:#22384d; word-break: break-word; }
+.repro p { font-family: "Cascadia Mono","Consolas",monospace; font-size: 16.5pt; line-height: 1.30; color:#22384d; word-break: break-word; white-space: pre-wrap; }
 
 .footer h3 { font-size: 19pt; color: #86e5f8; margin: 0 0 .08in; }
 .footer p { font-size: 13.5pt; line-height: 1.36; margin: 0; }

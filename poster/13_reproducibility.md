@@ -4,9 +4,13 @@
 
 **Repository:** `github.com/poojakira/mlsec-benchmark-suite` · MIT • Python 3.12 • HEAD 5c20f1da9602eb162efe8c63158da52b11d61f60 • verified 2026-10-01
 
-```
+```bash
+git clone https://github.com/poojakira/mlsec-benchmark-suite.git
+cd mlsec-benchmark-suite
+git checkout 5c20f1da9602eb162efe8c63158da52b11d61f60
+python -m pip install -e ".[dev]"
+pytest tests/ -q
 mlsec-benchmark run-hf-scanner --output r.json
-pytest tests/
 ```
 
 Evidence artifacts: results/real_hf_scanner.json, METHODOLOGY.md, tests/
