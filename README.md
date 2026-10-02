@@ -26,8 +26,8 @@ Reproduced on current `main` (Python 3.12).
 
 | Metric | Current verified result |
 |---|---:|
-| Tests | 73 collected — 72 passed, 1 skipped (real-detector test, needs hf-scanner) |
-| With hf-scanner installed | 73 passed |
+| Tests | 83 collected — 82 passed, 1 skipped (real-detector test, needs hf-scanner) |
+| With hf-scanner installed | 83 passed |
 | Adapters | typed, in-process, schema-validated |
 | Signing | Ed25519 sign/verify + dataset checksum |
 
@@ -166,7 +166,7 @@ Component responsibilities:
 | `reports/` | Generated Markdown reports for human review (via the `report` subcommand). |
 | `dashboard/` | Static HTML page served via GitHub Pages for at-a-glance status. |
 | `datasets/` | Fixture set manifests describing which inputs belong to which test suites. |
-| `tests/` | 73 test functions across 9 test modules covering all adapters, CLI, integration, security boundaries, Ed25519 signing, dataset checksum verification, and trend tracking. |
+| `tests/` | 83 test functions across 10 test modules covering all adapters, CLI, integration, security boundaries, Ed25519 signing, dataset checksum verification, and trend tracking. |
 
 ---
 
@@ -366,7 +366,7 @@ See [RUNBOOK.md](RUNBOOK.md) for the full operational reference for every subcom
 | CLI interface | Subcommand invocations | `test_cli.py` |
 | Ed25519 signing + dataset integrity | Keygen/sign/verify, tamper detection, checksum verification | `test_signing_and_dataset.py` |
 
-Total: 73 test functions across 9 test modules.
+Total: 83 test functions across 10 test modules.
 
 **Limitations:**
 - The suite tests tools against static, curated fixtures. It does not measure real-world detection rates or false positive rates on production data.
@@ -381,7 +381,7 @@ Total: 73 test functions across 9 test modules.
 | Criterion | Status | Notes |
 |-----------|--------|-------|
 | Automated CI | Yes | GitHub Actions workflow + Dependabot |
-| Test coverage | 73 test functions across 9 modules, all 4 adapters exercised | Current Python 3.12 CI: 72 passed, 1 skipped; 88.34% statement coverage |
+| Test coverage | 83 test functions across 10 modules, all 4 adapters exercised | Current Python 3.12 CI: 82 passed, 1 skipped; 90.07% statement coverage |
 | Schema validation | Enforced on every run | Catches output drift automatically |
 | Contract versioning | `portfolio-smoke-v1.json` | Versioned filename allows schema evolution |
 | Dependency hygiene | Zero runtime deps, pip-audit in CI | Minimal supply chain risk |
