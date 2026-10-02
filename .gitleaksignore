@@ -1,4 +1,7 @@
-# Fingerprint-scoped historical triage only. Do not add broad path or rule exclusions.
+# Exact historical findings reviewed during the 2026-10-01 production-hardening audit.
+# These fingerprints are limited to verified test/example/dependency fixtures.
+# mlsec-dashboards also includes the explicitly revoked legacy local dashboard key.
+# New findings, new commits, or changed lines are not suppressed.
 96be0111ac72cf895ef191d39fa4374e7b486502:.venv/Lib/site-packages/license_expression/data/scancode-licensedb-index.json:generic-api-key:10212
 96be0111ac72cf895ef191d39fa4374e7b486502:.venv/Lib/site-packages/license_expression/data/scancode-licensedb-index.json:generic-api-key:10214
 96be0111ac72cf895ef191d39fa4374e7b486502:.venv/Lib/site-packages/license_expression/data/scancode-licensedb-index.json:generic-api-key:10236
