@@ -1,0 +1,85 @@
+name: Real Product Adapter Validation
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  adapters-against-real-repos:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout benchmark suite
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          path: suite
+      - name: Checkout AWS identity guard
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          repository: poojakira/aws-agent-identity-guard
+          path: products/aws-agent-identity-guard
+          persist-credentials: false
+      - name: Checkout HF scanner
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          repository: poojakira/hf-model-provenance-scanner
+          path: products/hf-model-provenance-scanner
+          persist-credentials: false
+      - name: Checkout LLM red-team framework
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          repository: poojakira/llm-redteam-framework
+          path: products/llm-redteam-framework
+          persist-credentials: false
+      - name: Checkout dataset poisoning detector
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          repository: poojakira/dataset-poisoning-detector
+          path: products/dataset-poisoning-detector
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: "3.12"
+      - name: Install suite and product packages
+        run: |
+          python -m pip install -e "suite[dev]"
+          python -m pip install -e products/aws-agent-identity-guard
+          python -m pip install -e products/hf-model-provenance-scanner
+          python -m pip install -e products/llm-redteam-framework
+          python -m pip install -e "products/dataset-poisoning-detector[dev]"
+      - name: Exercise real adapters
+        working-directory: suite
+        run: |
+          python -m pytest             tests/test_iam_lint_adapter.py             tests/test_hf_scanner_adapter.py             tests/test_prompt_injection_adapter.py             tests/test_spectral_adapter.py -q
+      - name: Record child revisions
+        run: |
+          python - <<'PY'
+          import json, subprocess
+          from pathlib import Path
+          products = [
+              "aws-agent-identity-guard",
+              "hf-model-provenance-scanner",
+              "llm-redteam-framework",
+              "dataset-poisoning-detector",
+          ]
+          revisions = {}
+          for name in products:
+              revisions[name] = subprocess.check_output(
+                  ["git", "-C", f"products/{name}", "rev-parse", "HEAD"], text=True
+              ).strip()
+          Path("suite/results").mkdir(exist_ok=True)
+          Path("suite/results/real-product-adapter-revisions.json").write_text(
+              json.dumps({
+                  "products": revisions,
+                  "classification": "cross-repository integration evidence",
+                  "claim_boundary": "Adapter compatibility at exact child SHAs; not product efficacy."
+              }, indent=2) + "\n",
+              encoding="utf-8",
+          )
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: real-product-adapter-validation
+          path: suite/results/real-product-adapter-revisions.json
