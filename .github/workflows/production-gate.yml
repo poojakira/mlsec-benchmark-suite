@@ -33,6 +33,6 @@ jobs:
       - name: Unit and integration tests
         run: python -m pytest -q
       - name: Static quality gate
-        run: python -m ruff check mlsec_benchmark_suite tests
+        run: python -m ruff check .
       - name: Build/release smoke check
         run: python -m build
