@@ -164,16 +164,18 @@ def test_release_gate_requires_trusted_ed25519_results(tmp_path, monkeypatch):
     signed.write_text(json.dumps(result), encoding="utf-8")
 
     gate = tmp_path / "release-gate.json"
-    rc = cli.main([
-        "release-gate",
-        str(signed),
-        "--public-key",
-        str(public_key),
-        "--require-repository",
-        IDENTITY["repository"],
-        "--output",
-        str(gate),
-    ])
+    rc = cli.main(
+        [
+            "release-gate",
+            str(signed),
+            "--public-key",
+            str(public_key),
+            "--require-repository",
+            IDENTITY["repository"],
+            "--output",
+            str(gate),
+        ]
+    )
 
     assert rc == 0
     manifest = json.loads(gate.read_text(encoding="utf-8"))

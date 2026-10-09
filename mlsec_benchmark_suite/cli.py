@@ -192,7 +192,9 @@ def verify_signature_ed25519(payload: dict[str, Any], public_key_pem: Path | Non
     return True
 
 
-def generate_ed25519_keypair(private_out: Path, public_out: Path, *, overwrite: bool = False) -> None:
+def generate_ed25519_keypair(
+    private_out: Path, public_out: Path, *, overwrite: bool = False
+) -> None:
     """Generate an Ed25519 keypair and write PEM files (private + public)."""
     from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
     from cryptography.hazmat.primitives.serialization import (
@@ -228,9 +230,7 @@ def verify_dataset_checksums(manifest: dict[str, Any], fixtures_dir: Path) -> No
     """
     files = manifest.get("files")
     if not files:
-        raise ValueError(
-            "dataset manifest has no 'files' checksum map; cannot verify integrity"
-        )
+        raise ValueError("dataset manifest has no 'files' checksum map; cannot verify integrity")
     mismatches = []
     for rel_path, expected_digest in sorted(files.items()):
         target = (fixtures_dir / rel_path).resolve()
@@ -607,7 +607,8 @@ def _dispatch(argv: list[str] | None = None) -> int:
     keygen.add_argument("--overwrite", action="store_true")
 
     sign = sub.add_parser(
-        "sign", help="Re-sign an existing result with an Ed25519 private key (third-party verifiable)"
+        "sign",
+        help="Re-sign an existing result with an Ed25519 private key (third-party verifiable)",
     )
     sign.add_argument("result", type=Path)
     sign.add_argument("--private-key", type=Path, required=True)
