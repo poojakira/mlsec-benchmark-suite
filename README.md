@@ -1,18 +1,5 @@
 # mlsec-benchmark-suite
 
-<!-- security-systems-poster -->
-## Research Poster
-
-**Security Systems / 09 — Reproducible Regression Harness for Machine-Learning Security Tools**
-
-[![Research poster](poster/poster.png)](poster/poster_36x48.pdf)
-
-> Technical research poster (36 x 48 in). Click the image for the print-resolution **[PDF](poster/poster_36x48.pdf)**.
-> Poster measurements are dated snapshots at their printed commits. Use the repository evidence files for newer results; do not read the poster as a verification of the latest `main`.
-> Every metric on it is evidence-backed; historical/projected numbers are labeled and separated from current results.
-> Part of the *Pooja Kiran - Security Systems* engineering poster collection.
-<!-- security-systems-poster -->
-
 
 **Maintainer:** Pooja Kiran ([@poojakira](https://github.com/poojakira))
 
@@ -425,6 +412,19 @@ Total: 83 test functions across 10 test modules.
 - [INCIDENT_RUNBOOK.md](INCIDENT_RUNBOOK.md) - benchmark infrastructure incident response
 - [docs/CONTINUOUS_TRACKING.md](docs/CONTINUOUS_TRACKING.md) - how continuous trend tracking works
 - [mlsec_benchmark_suite/tracker.py](mlsec_benchmark_suite/tracker.py) - trend analysis and regression detection
+
+<!-- security-systems-poster -->
+## Research Poster
+
+**Security Systems / 09 — Reproducible Regression Harness for Machine-Learning Security Tools**
+
+[![Research poster](poster/poster.png)](poster/poster_36x48.pdf)
+
+> Technical research poster (36 x 48 in). Click the image for the print-resolution **[PDF](poster/poster_36x48.pdf)**.
+> Poster measurements are dated snapshots at their printed commits. Use the repository evidence files for newer results; do not read the poster as a verification of the latest `main`.
+> Every metric on it is evidence-backed; historical/projected numbers are labeled and separated from current results.
+> Part of the *Pooja Kiran - Security Systems* engineering poster collection.
+<!-- security-systems-poster -->
 
 ## License and Author
 
