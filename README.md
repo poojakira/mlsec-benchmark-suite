@@ -1,3 +1,5 @@
+> **READ THIS LICENSE BEFORE USING THIS REPOSITORY.** Owner-controlled new releases are subject to the [proprietary All Rights Reserved LICENSE](LICENSE): copying, modification, and redistribution require written authorization except where law or GitHub's Terms allow. Previously granted Apache-2.0 rights remain valid for versions covered by that license; see the [historical license](docs/license-history/LICENSE-BEFORE-2026-10-13.txt). Third-party rights remain unaffected.
+
 # mlsec-benchmark-suite
 
 
@@ -428,11 +430,13 @@ Total: 83 test functions across 10 test modules.
 
 ## License and Author
 
-**License**: Apache-2.0
+**License**: Proprietary / All Rights Reserved (previously Apache-2.0; historical grants preserved)
 
 **Author**: Pooja Kiran
 
 ```
+Historical Apache-2.0 notice (applies to previously licensed versions):
+
 Copyright 2024 Pooja Kiran
 
 Licensed under the Apache License, Version 2.0 (the "License");
