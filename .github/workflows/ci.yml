@@ -43,7 +43,7 @@ jobs:
 
       - name: Upload coverage report
         if: matrix.python-version == '3.12'
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
           name: coverage-report
           path: coverage.xml
@@ -126,7 +126,7 @@ jobs:
           python -m mlsec_benchmark_suite.tracker results/ reports/trend_report.md
 
       - name: Upload trend report
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
           name: trend-report
           path: reports/trend_report.md
@@ -182,7 +182,7 @@ jobs:
           python -m mlsec_benchmark_suite validate results/ci_hf_scanner.json
 
       - name: Upload benchmark results
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
           name: adapter-benchmark-results
           path: results/*.json
@@ -250,7 +250,7 @@ jobs:
           rm -f ci_signing_key.pem ci_signing_key.pub.pem
 
       - name: Upload real adapter result
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
           name: real-adapter-result
           path: results/real_hf_scanner.json
