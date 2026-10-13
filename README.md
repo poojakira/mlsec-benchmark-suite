@@ -434,9 +434,9 @@ Total: 83 test functions across 10 test modules.
 
 **Author**: Pooja Kiran
 
-```
 Historical Apache-2.0 notice (applies to previously licensed versions):
 
+```text
 Copyright 2024 Pooja Kiran
 
 Licensed under the Apache License, Version 2.0 (the "License");
