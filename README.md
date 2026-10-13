@@ -15,8 +15,8 @@ Reproduced on current `main` (Python 3.12).
 
 | Metric | Current verified result |
 |---|---:|
-| Tests | 83 collected — 82 passed, 1 skipped (real-detector test, needs hf-scanner) |
-| With hf-scanner installed | 83 passed |
+| Tests | 85 collected — 84 passed, 1 skipped locally (real-detector test needs hf-scanner) |
+| With hf-scanner installed | Not measured in this pass |
 | Adapters | typed, in-process, schema-validated |
 | Signing | Ed25519 sign/verify + dataset checksum |
 
@@ -28,7 +28,7 @@ A portfolio of independently maintained security tools has an integration risk: 
 
 **In scope:** in-process regression/contract testing of sibling tool adapters against versioned fixtures; Ed25519 signing and dataset-checksum verification of benchmark artifacts.
 
-**Out of scope / not claimed:** It is a regression harness, not a security scanner itself. Sibling modules are mocked for unit tests, so the suite is green with no sibling tools installed; the one real-detector test is skipped without hf-scanner. Fixture results are contract checks, not real-world detection rates.
+**Out of scope / not claimed:** It is a regression harness, not a security scanner itself. Sibling modules are mocked for unit tests, but IAM adapter tests require the IAM sibling; the one real-detector test is skipped without hf-scanner. Fixture results are contract checks, not real-world detection rates.
 
 ## Architecture
 
@@ -94,7 +94,7 @@ run as a gating CI job (`real-adapter`) that installs the real sibling from git.
 
 The other adapters (`run-iam-lint`, `run-prompt-injection`, `run-spectral`) are
 real in-process adapters too, but their sibling tools are optional; their unit
-tests use mocks so `pytest tests/` stays green with no siblings installed.
+HF tests use mocks; IAM adapter tests require aws-agent-identity-guard.
 
 ### Evidence integrity: verifiable signatures + dataset checksums
 
@@ -155,7 +155,7 @@ Component responsibilities:
 | `reports/` | Generated Markdown reports for human review (via the `report` subcommand). |
 | `dashboard/` | Static HTML page served via GitHub Pages for at-a-glance status. |
 | `datasets/` | Fixture set manifests describing which inputs belong to which test suites. |
-| `tests/` | 83 test functions across 10 test modules covering all adapters, CLI, integration, security boundaries, Ed25519 signing, dataset checksum verification, and trend tracking. |
+| `tests/` | 85 collected tests across 11 test modules covering all adapters, CLI, integration, security boundaries, Ed25519 signing, dataset checksum verification, and trend tracking. |
 
 ---
 
@@ -236,7 +236,7 @@ pip install -e ".[dev]"
 
 Prerequisites:
 - Python 3.10 or later
-- The unit-test suite (`pytest tests/`) runs fully with **no sibling tools installed** —
+- The unit-test suite (`pytest tests/`) requires **aws-agent-identity-guard** —
   adapter tests mock the sibling modules.
 - Running a *live* per-adapter benchmark (`run-<adapter>`) requires that adapter's
   sibling package to be importable. Each is optional and only needed for its own command:
@@ -355,7 +355,7 @@ See [RUNBOOK.md](RUNBOOK.md) for the full operational reference for every subcom
 | CLI interface | Subcommand invocations | `test_cli.py` |
 | Ed25519 signing + dataset integrity | Keygen/sign/verify, tamper detection, checksum verification | `test_signing_and_dataset.py` |
 
-Total: 83 test functions across 10 test modules.
+Total: 85 collected tests across 11 test modules.
 
 **Limitations:**
 - The suite tests tools against static, curated fixtures. It does not measure real-world detection rates or false positive rates on production data.
@@ -370,7 +370,7 @@ Total: 83 test functions across 10 test modules.
 | Criterion | Status | Notes |
 |-----------|--------|-------|
 | Automated CI | Yes | GitHub Actions workflow + Dependabot |
-| Test coverage | 83 test functions across 10 modules, all 4 adapters exercised | Current Python 3.12 CI: 82 passed, 1 skipped; 90.07% statement coverage |
+| Test coverage | 85 collected tests across 11 modules, all 4 adapters exercised | Current local Python 3.12: 84 passed, 1 skipped; see verification section for coverage |
 | Schema validation | Enforced on every run | Catches output drift automatically |
 | Contract versioning | `portfolio-smoke-v1.json` | Versioned filename allows schema evolution |
 | Dependency hygiene | Zero runtime deps, pip-audit in CI | Minimal supply chain risk |
@@ -452,22 +452,7 @@ You may obtain a copy of the License at
 
 The most useful testing infrastructure is the kind that tests the boundaries between systems, not just the systems themselves. Every tool in this portfolio had passing unit tests. What none of them had was a way to verify they still agreed on a shared contract. Building that verification layer took less code than any individual tool's test suite, but it caught more integration bugs than all of them combined. The key insight: treat tool output schemas the way you treat API contracts. Version them, validate them automatically, and break the build when they drift.
 
-<!-- repo-verification:start -->
-## Verification update — 2026-09-30
 
-- **Scope:** Account-wide `poojakira` repository pass covering source/configuration, CI/release workflows, security-hygiene gates, dependency/SAST controls, and documentation consistency.
-- **Remediation:** Pinned the CI workflow actions to immutable revisions while preserving signing and benchmark evidence generation.
-- **Verification state:** CI, Production Gate, Security Hygiene, and Documentation Integrity completed successfully after the hardening commit.
-- **Security note:** Benchmark scores are reproducible test evidence and should not be described as production guarantees.
-- **Evidence boundary:** This update records repository and GitHub Actions evidence observed during the pass. It is not a claim of independent penetration testing, production deployment, or zero residual risk.
-<!-- repo-verification:end -->
-
-## Verification checkpoint — 2026-09-30
-
-- **Snapshot commit:** `8134ea47252e5e7161dcbfc0daf5a9bd1dc3c6c0`
-- **Status:** VERIFIED GREEN
-- **Evidence:** Security Hygiene, Documentation Integrity, Production Gate, and CI all completed successfully for the cited snapshot revision.
-- This checkpoint is intentionally date-bounded. It does not claim zero vulnerabilities or universal production readiness.
 
 
 ## Secret handling
@@ -507,3 +492,13 @@ source, tests, scripts, examples, benchmarks, validation helpers, and poster gen
 where present. Ruff's standard exclusions omit version-control metadata, virtual
 environments, and build/cache directories; generated poster HTML/PDF/PNG assets are
 not Python source. Passing these static checks does not establish runtime behavior or product effectiveness.
+
+## Current local verification — 2026-10-13
+
+Starting revision: `9ef5b27477129ca53062c4cda4aa70e3f1826980`. Python 3.12.14 on Linux; pytest 9.1.1, pytest-cov 7.1.0.
+
+- Command: `pytest -ra --cov=mlsec_benchmark_suite --cov-report=term`.
+- Result: 84 passed, 1 skipped; statement coverage 90.82%.
+- Checks and limits: Ruff check/format and medium/high Bandit passed. HF real-scanner test skipped because scanner package unavailable.
+- Scope: IAM sibling installed from poojakira/aws-agent-identity-guard at 1e0eeeac62ec192a443a38b15b37f6a83e79546b. HMAC verification rejects unknown signature algorithms and malformed signature values.
+- Earlier snapshots: [previos_runs.md](previos_runs.md). These local checks are not a complete file-by-file audit or proof of production readiness.

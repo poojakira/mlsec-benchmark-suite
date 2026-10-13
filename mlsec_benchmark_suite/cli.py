@@ -107,13 +107,24 @@ def sign_payload(payload: dict[str, Any], key: str | None) -> dict[str, str]:
 
 def verify_signature(payload: dict[str, Any], key: str | None) -> bool:
     signature = payload.get("signature", {})
+    if not isinstance(signature, dict):
+        return False
     expected = sign_payload(payload, key)
     if signature.get("payload_sha256") != expected["payload_sha256"]:
         return False
     if signature.get("algorithm") == "unsigned":
         return not key and signature.get("value") == ""
-    # hmac.compare_digest performs a timing-safe comparison to prevent timing attacks.
-    return bool(key) and _hmac.compare_digest(signature.get("value", ""), expected["value"])
+    if signature.get("algorithm") != "hmac-sha256":
+        return False
+    # Reject malformed untrusted signature values before constant-time comparison.
+    value = signature.get("value")
+    return (
+        bool(key)
+        and isinstance(value, str)
+        and len(value) == 64
+        and all(char in "0123456789abcdef" for char in value)
+        and _hmac.compare_digest(value, expected["value"])
+    )
 
 
 # ---------------------------------------------------------------------------
