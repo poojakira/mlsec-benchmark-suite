@@ -368,7 +368,7 @@ Total: 83 test functions across 10 test modules.
 | Criterion | Status | Notes |
 |-----------|--------|-------|
 | Automated CI | Yes | GitHub Actions workflow + Dependabot |
-| Test coverage | 83 test functions across 10 modules, all 4 adapters exercised | Current Python 3.12 CI: 82 passed, 1 skipped; 90.07% statement coverage |
+| Test coverage | 83 test functions across 10 modules, all 4 adapters exercised | October 12 CI run 38298946029 at 848edf0506178f4e386c5007df9ae72001b5a238: 82 passed, 1 skipped; 90.76% statement coverage |
 | Schema validation | Enforced on every run | Catches output drift automatically |
 | Contract versioning | `portfolio-smoke-v1.json` | Versioned filename allows schema evolution |
 | Dependency hygiene | Zero runtime deps, pip-audit in CI | Minimal supply chain risk |

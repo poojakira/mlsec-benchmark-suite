@@ -3,7 +3,7 @@
 > Evidence status: This is a dated repository snapshot at the commit identified below. `VERIFIED_AT_SNAPSHOT` means verified for that commit and environment; it does not assert the same result on the latest `main`. Compare newer claims with the repository evidence before reuse.
 
 ## Repository
-`github.com/poojakira/mlsec-benchmark-suite` (public, default branch `main`, primary language Python). MIT • Python 3.12 • HEAD 5c20f1da9602eb162efe8c63158da52b11d61f60 • verified 2026-10-01
+`github.com/poojakira/mlsec-benchmark-suite` (public, default branch `main`, primary language Python). Apache-2.0 • Python 3.12 • HEAD 848edf0506178f4e386c5007df9ae72001b5a238 • verified 2026-10-12
 
 ## Academic Project Title
 **Reproducible Regression Harness for Machine-Learning Security Tools**
@@ -37,14 +37,14 @@ O4 — Real adapter gating in CI
 1 Load (fixtures) -> 2 Adapt (in-proc) -> 3 Run (tool) -> 4 Validate (schema) -> 5 Assert (contract) -> 6·7 Report (Markdown)
 
 ## Evidence at Poster Snapshot + Claim Ledger
-- **VERIFIED_AT_SNAPSHOT** — Real HF-scanner adapter: precision=recall=F1=1.0 on 5 fixtures — README verified real run; tests/test_hf_scanner_adapter.py end-to-end (no mock); total_tp=3,total_fp=0,total_fn=0.
-- **VERIFIED_AT_SNAPSHOT** — 83 test functions across 10 test modules; current Python 3.12 CI recorded 82 passed, 1 skipped with 90.07% statement coverage — repository README and test tree at HEAD 5c20f1da9602eb162efe8c63158da52b11d61f60.
+- **VERIFIED_AT_SNAPSHOT** — Real HF-scanner adapter: precision=recall=F1=1.0 on 5 fixtures — CI run 38298946029 real-adapter job 114977020804; tests/test_hf_scanner_adapter.py end-to-end (no mock); total_tp=3,total_fp=0,total_fn=0.
+- **VERIFIED_AT_SNAPSHOT** — 83 test functions across 10 test modules; current Python 3.12 CI recorded 82 passed, 1 skipped with 90.76% statement coverage — repository README and test tree at HEAD 848edf0506178f4e386c5007df9ae72001b5a238.
 - **VERIFIED_AT_SNAPSHOT** — JSON-schema contracts + versioned fixtures; pytest fails on drift — README how-it-works; schemas/ + contracts/ present.
 - **UNSUPPORTED (disclaimed by repo)** — run-smoke per-category numbers — README: seeded-PRNG synthetic scaffold for plumbing, NOT measurements. Shown as synthetic only.
 - **UNSUPPORTED (disclaimed)** — Real-world accuracy of wrapped tools — Suite validates contracts/format, not accuracy.
 
 ## Important Negative / Honest Results
-See RESULTS panel: Real adapter is end-to-end (no mock). Smoke bar marks synthetic plumbing, not a measurement.
+See RESULTS panel: Real adapter is end-to-end (no mock). Synthetic smoke output is schema plumbing, not a measured detector score; no smoke bar is rendered.
 
 ## Limitations
 1. Validates contracts/format, not real-world accuracy.
@@ -65,7 +65,14 @@ See RESULTS panel: Real adapter is end-to-end (no mock). Smoke bar marks synthet
 mlsec-benchmark run-hf-scanner --output r.json
 pytest tests/
 ```
-Evidence: results/real_hf_scanner.json, METHODOLOGY.md, tests/
+Evidence: CI run 38298946029 real-adapter job 114977020804 (historical results JSON is absent), METHODOLOGY.md, tests/
 
 ## References
-[1] JSON Schema · [2] pytest · [3] OWASP ML Security · [4] MITRE ATLAS · [5] SLSA / evidence provenance · [6] NIST AI RMF 1.0
+[1] JSON Schema · [2] pytest · [3] OWASP ML Security · [4] Apache-2.0RE ATLAS · [5] SLSA / evidence provenance · [6] NIST AI RMF 1.0
+
+
+## Claim audit and rendered-source boundary, October 13, 2026 UTC
+
+The reviewed printed claims, source and test commit anchors, CI dates and benchmark limitations are in `verified_claims.json`. The PDF is generated from that manifest and the PNG is rasterized from the same page by `render_poster.py`. Source inventory, dated CI and separate reported experiments must not be combined into one result. Earlier artifact versions remain in Git history; these corrections do not assert production readiness.
+
+Offline poster rendering: `python -m pip install reportlab==4.4.9 PyMuPDF==1.26.6`, then `python poster/render_poster.py`. The font is bundled with the pinned ReportLab package; no browser or network fetch is used during rendering.
