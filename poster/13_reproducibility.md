@@ -1,12 +1,16 @@
-# Reproduce the Work — Poster 09
+# Reproduce the Work — Benchmark Suite Poster 09
 
-> Evidence status: This is a dated repository snapshot at the commit identified below. `VERIFIED_AT_SNAPSHOT` means verified for that commit and environment; it does not assert the same result on the latest `main`. Compare newer claims with the repository evidence before reuse.
+**Historical code snapshot:** `5c20f1da9602eb162efe8c63158da52b11d61f60` (October 1, 2026)  
+**Historical license at that commit:** **Apache License 2.0**, verified against its `LICENSE` file. Later versions may carry proprietary terms; historical grants remain applicable.
 
-**Repository:** `github.com/poojakira/mlsec-benchmark-suite` · MIT • Python 3.12 • HEAD 5c20f1da9602eb162efe8c63158da52b11d61f60 • verified 2026-10-01
-
+```bash
+git clone https://github.com/poojakira/mlsec-benchmark-suite.git
+cd mlsec-benchmark-suite
+git checkout 5c20f1da9602eb162efe8c63158da52b11d61f60
+python -m pip install -e ".[dev]"
+pytest tests/ -q
 ```
-mlsec-benchmark run-hf-scanner --output r.json
-pytest tests/
-```
 
-Evidence artifacts: results/real_hf_scanner.json, METHODOLOGY.md, tests/
+Historical evidence: **82 passed, 1 skipped** (83 collected), **90.07% statement coverage**, 83 test functions across 10 modules. A separately run genuine HF scanner adapter yielded 3 true positives and 0 false positives on five committed fixtures; it does not prove real-world detection accuracy. A smoke scaffold uses synthetic PRNG numbers, not measurements.
+
+The poster graphic is regenerated from the research brief and verified metrics, and must be checked against the final PR head.

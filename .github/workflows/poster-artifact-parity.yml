@@ -1,0 +1,54 @@
+# Keep rendered poster artwork synchronized with committed research and metric sources.
+name: Poster Artifact Parity
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'poster/**'
+      - '.github/workflows/poster-artifact-parity.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: read
+
+jobs:
+  render-and-sync:
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout PR head (never merge or execute fork-supplied code)
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.event.pull_request.head.ref || github.ref }}
+          persist-credentials: false
+      - name: Rebuild poster from committed source
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check PyMuPDF
+          export POSTER_BROWSER="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
+          test -n "$POSTER_BROWSER"
+          python poster/render_poster.py
+          test -s poster/poster.png
+          test -s poster/poster_36x48.pdf
+      - name: Commit generated poster artifacts to PR branch
+        if: github.event_name == 'pull_request'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_BRANCH: ${{ github.head_ref }}
+        run: |
+          set -euo pipefail
+          remote_png="$(gh api "repos/$GITHUB_REPOSITORY/contents/poster/poster.png?ref=$PR_BRANCH" --jq .sha)"
+          if [ "$(git hash-object poster/poster.png)" = "$remote_png" ]; then
+            echo 'Poster PNG already matches the committed artifact'
+            exit 0
+          fi
+          for path in poster/poster.png poster/poster_36x48.pdf; do
+            remote_sha="$(gh api "repos/$GITHUB_REPOSITORY/contents/$path?ref=$PR_BRANCH" --jq .sha)"
+            base64 -w0 "$path" > /tmp/poster-base64
+            jq -n --arg message 'build: synchronize poster artifacts with evidence' --rawfile content /tmp/poster-base64 --arg sha "$remote_sha" --arg branch "$PR_BRANCH" '{message:$message,content:$content,sha:$sha,branch:$branch}' > /tmp/poster-update.json
+            gh api --method PUT "repos/$GITHUB_REPOSITORY/contents/$path" --input /tmp/poster-update.json >/dev/null
+          done
