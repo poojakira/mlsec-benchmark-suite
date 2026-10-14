@@ -77,7 +77,7 @@ methods = items(sec("Method", "Methodology"))[:6]
 if not methods:
     inline_method = clean(sec("Method", "Methodology"))
     methods = [
-        clean(re.sub(r"^\\d+(?:[·.]\\d+)?\\s*", "", part))
+        clean(re.sub(r"^\d+(?:[·.]\d+)?\s*", "", part))
         for part in inline_method.split("->")
         if clean(part)
     ][:6]
@@ -117,9 +117,9 @@ evidence_runs = list(
     )
 )
 if evidence_shas:
-    repro += "\nMeasured code snapshot: " + "; ".join(evidence_shas)
+    repro += "\nMeasured code snapshot: " + evidence_shas[0]
 if evidence_runs:
-    repro += "\nEvidence CI run: " + "; ".join(evidence_runs)
+    repro += "\nEvidence CI run: " + evidence_runs[0]
 
 metrics = []
 headline_match = re.search(
