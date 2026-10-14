@@ -63,16 +63,26 @@ title = clean(sec("Academic Project Title", "Project Title")) or repo.name.repla
 subtitle = clean(sec("Subtitle"))
 contribution = clean(sec("One-Sentence Contribution", "Contribution", "Research Contribution"))
 methods = items(sec("Method", "Methodology"))[:6]
+if not methods:
+    inline_method = clean(sec("Method", "Methodology"))
+    methods = [
+        clean(re.sub(r"^\d+(?:[·.]\d+)?\s*", "", part))
+        for part in inline_method.split("->")
+        if clean(part)
+    ][:6]
 evidence = items(
     sec(
         "Current Verified Evidence",
         "Verified Evidence",
+        "Verified Evidence at Poster Snapshot",
+        "Verified Current CI and Separately Pinned Benchmark Evidence",
         "Evidence at Poster Snapshot + Claim Ledger",
     )
 )[:7]
 limits = items(
     sec(
         "Honest Boundaries",
+        "Claim Boundary",
         "Limitations",
         "Limitations & Residual Risk",
         "Not established by this repository",
@@ -81,8 +91,19 @@ limits = items(
 repro_block = sec("Reproducibility")
 repro = strip_fences(repro_block)[:900]
 repository = (
-    clean(sec("Repository")) or f"github.com/poojakira/{repo.name.replace('_readonly_','')}"
+    clean(sec("Repository")) or f"github.com/poojakira/{repo.name.replace('_readonly_', '')}"
 )
+
+
+# Print the measured evidence snapshot, not the commit that only rendered the artwork.
+evidence_shas = list(dict.fromkeys(re.findall(r"\b[0-9a-f]{40}\b", metrics_text)))
+evidence_runs = list(
+    dict.fromkeys(re.findall(r"(?:actions/runs/|run\s+`?)([0-9]{8,})", metrics_text, re.IGNORECASE))
+)
+if evidence_shas:
+    repro += "\nMeasured code snapshot: " + evidence_shas[0]
+if evidence_runs:
+    repro += "\nEvidence CI run: " + evidence_runs[0]
 
 metrics = []
 headline_match = re.search(r"(?ms)^##+\s+Headline cards\s*$\n(.*?)(?=^##+\s+|\Z)", metrics_text)
@@ -236,7 +257,10 @@ html, body { margin:0; width:36in; height:48in; font-family:"Segoe UI",Arial,san
 """
 
 prov = [
-    ("Claim discipline", "Metrics come from the repository's verified metrics and research brief."),
+    (
+        "Claim discipline",
+        "Metrics come from the repository's verified metrics and research brief.",
+    ),
     (
         "Scope discipline",
         "Benchmarks are reported only at their documented fixture, dataset, or test scope.",
