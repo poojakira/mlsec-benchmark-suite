@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import html
+import os
 import re
 import shutil
 import subprocess
@@ -284,7 +285,13 @@ doc += "</div></body></html>"
 
 html_path = poster / "_poster_render.html"
 html_path.write_text(doc, encoding="utf-8")
-browsers = [
+candidates = [
+    os.environ.get("POSTER_BROWSER"),
+    shutil.which("google-chrome"),
+    shutil.which("chromium"),
+    shutil.which("chromium-browser"),
+]
+browsers = [Path(p) for p in candidates if p] + [
     Path(r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"),
     Path(r"C:\Program Files\Microsoft\Edge\Application\msedge.exe"),
     Path(r"C:\Program Files\Google\Chrome\Application\chrome.exe"),
@@ -301,6 +308,7 @@ subprocess.run(
         str(browser),
         "--headless=new",
         "--disable-gpu",
+        "--no-sandbox",
         f"--user-data-dir={profile}",
         "--no-pdf-header-footer",
         f"--print-to-pdf={pdf}",
