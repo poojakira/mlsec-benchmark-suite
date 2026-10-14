@@ -13,7 +13,7 @@ Notes: run-hf-scanner: precision=recall=F1=1.0 on 5 committed fixtures. 3 known-
 | Item | Value |
 |---|---|
 | Test functions | 83 across 10 modules |
-| Current CI | 82 passed, 1 skipped |
+| Historical pinned CI | 82 passed, 1 skipped |
 | Statement coverage | 90.07% |
 | Real fixtures | 5 |
 | Real adapters | gated CI |
